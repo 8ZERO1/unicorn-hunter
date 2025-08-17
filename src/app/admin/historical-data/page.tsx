@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initializeHistoricalData } from '../../../lib/data/dataService';
 
 export default function HistoricalDataAdmin() {
@@ -8,11 +8,24 @@ export default function HistoricalDataAdmin() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
-  const addLog = (message: string) => {
-    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
+const addLog = (message: string) => {
+  setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+};
 
-  const startCollection = async () => {
+// Add this new useEffect hook here:
+useEffect(() => {
+  if (logs.length > 0) {
+    setTimeout(() => {
+      const logsContainer = document.querySelector('.logs-container');
+      if (logsContainer) {
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+      }
+    }, 100);
+  }
+}, [logs]);
+
+const startCollection = async () => {
+  // Your existing function stays the same
     setIsCollecting(true);
     setLogs([]);
     setIsComplete(false);
