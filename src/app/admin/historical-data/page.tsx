@@ -8,24 +8,23 @@ export default function HistoricalDataAdmin() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
-const addLog = (message: string) => {
-  setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-};
+  const addLog = (message: string) => {
+    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
 
-// Add this new useEffect hook here:
-useEffect(() => {
-  if (logs.length > 0) {
-    setTimeout(() => {
-      const logsContainer = document.querySelector('.logs-container');
-      if (logsContainer) {
-        logsContainer.scrollTop = logsContainer.scrollHeight;
-      }
-    }, 100);
-  }
-}, [logs]);
+  // Auto-scroll functionality
+  useEffect(() => {
+    if (logs.length > 0) {
+      setTimeout(() => {
+        const logsContainer = document.querySelector('.logs-container');
+        if (logsContainer) {
+          logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [logs]);
 
-const startCollection = async () => {
-  // Your existing function stays the same
+  const startCollection = async () => {
     setIsCollecting(true);
     setLogs([]);
     setIsComplete(false);
@@ -43,19 +42,6 @@ const startCollection = async () => {
       };
 
       const success = await initializeHistoricalData();
-
-      // Add this to the addLog function
-      const addLog = (message: string) => {
-      setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-    
-      // Auto-scroll to bottom after a brief delay
-      setTimeout(() => {
-          const logsContainer = document.querySelector('.logs-container');
-          if (logsContainer) {
-          logsContainer.scrollTop = logsContainer.scrollHeight;
-          }
-      }, 100);
-      };
       
       // Restore console
       console.log = originalConsoleLog;
@@ -199,59 +185,61 @@ const startCollection = async () => {
         }
 
         .admin-header {
-        background: linear-gradient(135deg, 
+          background: linear-gradient(135deg, 
             rgba(99, 102, 241, 0.1) 0%, 
             rgba(168, 85, 247, 0.1) 100%);
-        border-bottom: 1px solid var(--border-subtle);
-        backdrop-filter: blur(20px);
-        padding: 60px 0;
-        margin-bottom: 40px;
-        text-align: center; /* Center everything */
+          border-bottom: 1px solid var(--border-subtle);
+          backdrop-filter: blur(20px);
+          padding: 60px 0;
+          margin-bottom: 40px;
+          text-align: center;
         }
 
         .header-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 40px;
-        display: flex;
-        flex-direction: column; /* Stack vertically */
-        align-items: center; /* Center horizontally */
-        gap: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 40px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
         }
 
         .header-icon {
-        font-size: 5rem; /* Slightly larger for impact */
-        opacity: 0.9;
-        animation: float 3s ease-in-out infinite; /* Subtle floating animation */
+          font-size: 5rem;
+          opacity: 0.9;
+          animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-8px); }
-        }.header-text {
-        text-align: center; /* Ensure text is centered */
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+
+        .header-text {
+          text-align: center;
         }
 
         .header-text h1 {
-        font-size: 3.5rem; /* Slightly larger since it's centered */
-        font-weight: 600;
-        margin: 0;
-        color: var(--text-primary);
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -0.02em; /* Tighter letter spacing for modern look */
+          font-size: 3.5rem;
+          font-weight: 600;
+          margin: 0;
+          color: var(--text-primary);
+          background: linear-gradient(135deg, #6366f1, #a855f7);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -0.02em;
         }
 
         .header-text p {
-        font-size: 1.3rem; /* Slightly larger subtitle */
-        color: var(--text-secondary);
-        margin: 12px 0 0 0;
-        font-weight: 400;
-        max-width: 600px; /* Constrain width for better readability */
-        margin-left: auto;
-        margin-right: auto;
+          font-size: 1.3rem;
+          color: var(--text-secondary);
+          margin: 12px 0 0 0;
+          font-weight: 400;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .admin-content {
@@ -506,7 +494,7 @@ const startCollection = async () => {
           .admin-header {
             padding: 40px 0;
           }
-
+          
           .admin-content {
             padding: 0 20px;
           }
@@ -515,7 +503,7 @@ const startCollection = async () => {
             padding: 0 20px;
             gap: 16px;
           }
-
+          
           .header-icon {
             font-size: 4rem;
           }
@@ -523,7 +511,7 @@ const startCollection = async () => {
           .header-text h1 {
             font-size: 2.5rem;
           }
-
+          
           .header-text p {
             font-size: 1.1rem;
           }
