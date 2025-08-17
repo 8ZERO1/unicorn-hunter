@@ -30,6 +30,19 @@ export default function HistoricalDataAdmin() {
       };
 
       const success = await initializeHistoricalData();
+
+      // Add this to the addLog function
+      const addLog = (message: string) => {
+      setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    
+      // Auto-scroll to bottom after a brief delay
+      setTimeout(() => {
+          const logsContainer = document.querySelector('.logs-container');
+          if (logsContainer) {
+          logsContainer.scrollTop = logsContainer.scrollHeight;
+          }
+      }, 100);
+      };
       
       // Restore console
       console.log = originalConsoleLog;
@@ -173,45 +186,59 @@ export default function HistoricalDataAdmin() {
         }
 
         .admin-header {
-          background: linear-gradient(135deg, 
+        background: linear-gradient(135deg, 
             rgba(99, 102, 241, 0.1) 0%, 
             rgba(168, 85, 247, 0.1) 100%);
-          border-bottom: 1px solid var(--border-subtle);
-          backdrop-filter: blur(20px);
-          padding: 40px 0;
-          margin-bottom: 40px;
+        border-bottom: 1px solid var(--border-subtle);
+        backdrop-filter: blur(20px);
+        padding: 60px 0;
+        margin-bottom: 40px;
+        text-align: center; /* Center everything */
         }
 
         .header-content {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 40px;
-          display: flex;
-          align-items: center;
-          gap: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+        display: flex;
+        flex-direction: column; /* Stack vertically */
+        align-items: center; /* Center horizontally */
+        gap: 20px;
         }
 
         .header-icon {
-          font-size: 4rem;
-          opacity: 0.9;
+        font-size: 5rem; /* Slightly larger for impact */
+        opacity: 0.9;
+        animation: float 3s ease-in-out infinite; /* Subtle floating animation */
+        }
+
+        @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        }.header-text {
+        text-align: center; /* Ensure text is centered */
         }
 
         .header-text h1 {
-          font-size: 3rem;
-          font-weight: 600;
-          margin: 0;
-          color: var(--text-primary);
-          background: linear-gradient(135deg, #6366f1, #a855f7);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        font-size: 3.5rem; /* Slightly larger since it's centered */
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em; /* Tighter letter spacing for modern look */
         }
 
         .header-text p {
-          font-size: 1.2rem;
-          color: var(--text-secondary);
-          margin: 8px 0 0 0;
-          font-weight: 400;
+        font-size: 1.3rem; /* Slightly larger subtitle */
+        color: var(--text-secondary);
+        margin: 12px 0 0 0;
+        font-weight: 400;
+        max-width: 600px; /* Constrain width for better readability */
+        margin-left: auto;
+        margin-right: auto;
         }
 
         .admin-content {
@@ -463,19 +490,29 @@ export default function HistoricalDataAdmin() {
         }
 
         @media (max-width: 768px) {
+          .admin-header {
+            padding: 40px 0;
+          }
+
           .admin-content {
             padding: 0 20px;
           }
 
           .header-content {
             padding: 0 20px;
-            flex-direction: column;
-            text-align: center;
             gap: 16px;
+          }
+
+          .header-icon {
+            font-size: 4rem;
           }
 
           .header-text h1 {
             font-size: 2.5rem;
+          }
+
+          .header-text p {
+            font-size: 1.1rem;
           }
 
           .feature-grid {
