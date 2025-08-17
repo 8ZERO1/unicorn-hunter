@@ -27,13 +27,48 @@ export default function Navigation() {
           >
             ☰
           </button>
-          <div className="header-brand">
-            <span className="brand-icon">🦄</span>
-            <span className="brand-text">Unicorn Hunter</span>
+          
+          {/* Enhanced Brand with Sports Ticker */}
+          <div className="header-brand-container">
+            <div className="sports-ticker">
+              <div className="ticker-content">
+                <span>⚾</span>
+                <span>🏀</span>
+                <span>🏈</span>
+                <span>⚽</span>
+                <span>🏒</span>
+                <span>⛳</span>
+                <span>🎾</span>
+                <span>🏐</span>
+                {/* Duplicate for seamless loop */}
+                <span>⚾</span>
+                <span>🏀</span>
+                <span>🏈</span>
+                <span>⚽</span>
+                <span>🏒</span>
+                <span>⛳</span>
+                <span>🎾</span>
+                <span>🏐</span>
+              </div>
+            </div>
+            
+            <div className="header-brand">
+              <span className="brand-icon">🦄</span>
+              <div className="brand-text-container">
+                <span className="brand-text">Sports Card Unicorn Hunter</span>
+                <div className="brand-subtitle">Advanced Intelligence Platform</div>
+              </div>
+            </div>
           </div>
+          
           <div className="header-actions">
-            <button className="notification-btn">🔔</button>
-            <div className="user-profile">👤</div>
+            <button className="notification-btn">
+              <span className="notification-icon">🔔</span>
+              <span className="notification-badge">3</span>
+            </button>
+            <div className="user-profile">
+              <span className="profile-icon">👤</span>
+            </div>
           </div>
         </div>
       </header>
@@ -49,8 +84,35 @@ export default function Navigation() {
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
+              {pathname === item.href && <div className="active-indicator" />}
             </Link>
           ))}
+        </div>
+        
+        {/* Sidebar Footer with Sports Theme */}
+        <div className="sidebar-footer">
+          <div className="sports-stats">
+            <div className="stat-item">
+              <span className="stat-icon">⚾</span>
+              <span className="stat-count">8</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon">🏀</span>
+              <span className="stat-count">6</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon">🏈</span>
+              <span className="stat-count">7</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon">⚽</span>
+              <span className="stat-count">4</span>
+            </div>
+          </div>
+          <div className="footer-text">
+            <span>Hunting Unicorns</span>
+            <span className="pulse-dot">●</span>
+          </div>
         </div>
       </nav>
     </>
