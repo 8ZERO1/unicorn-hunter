@@ -181,23 +181,23 @@ export default function HotAuctionsPage() {
               <span className="title-badge">LIVE eBay Data</span>
             </h1>
             
-            <div className="header-status-row">
+<div className="header-status-row">
               <div className="status-info">
                 {isLoading ? (
                   <div className="loading-indicator">
-                    <span className="loading-spinner">⚡</span>
-                    <span className="status-text loading-text">Scanning eBay for unicorns...</span>
+                    <span className="loading-spinner">⚾</span>
+                    <span className="status-text loading-text">Scouting the marketplace...</span>
                   </div>
                 ) : error ? (
                   <div className="error-indicator">
                     <span className="error-icon">⚠️</span>
-                    <span className="status-text error-text">Connection error</span>
+                    <span className="status-text error-text">Connection lost</span>
                   </div>
                 ) : (
                   <div className="live-indicator">
                     <span className="live-dot"></span>
                     <span className="status-text">
-                      <strong>{sortedAuctions.length}</strong> active opportunities
+                      <strong>{sortedAuctions.length}</strong> unicorns detected
                     </span>
                   </div>
                 )}
@@ -205,12 +205,11 @@ export default function HotAuctionsPage() {
               
               {!isLoading && !error && (
                 <div className="last-update">
-                  <span className="update-label">Updated</span>
+                  <span className="update-label">Last Scout</span>
                   <span className="update-time">{lastRefresh.toLocaleTimeString()}</span>
                 </div>
               )}
             </div>
-          </div>
           
           {/* Action Section */}
           <div className="header-actions-section">
@@ -219,9 +218,9 @@ export default function HotAuctionsPage() {
               disabled={isLoading}
               className={`refresh-button ${isLoading ? 'loading' : ''}`}
             >
-              <span className="refresh-icon">{isLoading ? '⚡' : '🔄'}</span>
+              <span className="refresh-icon">{isLoading ? '⚾' : '🔄'}</span>
               <span className="refresh-text">
-                {isLoading ? 'Scanning...' : 'Refresh'}
+                {isLoading ? 'Hunting...' : 'Hunt Again'}
               </span>
             </button>
           </div>
@@ -292,13 +291,48 @@ export default function HotAuctionsPage() {
         </div>
       </div>
 
-      {/* Loading State */}
+{/* ENHANCED Loading State */}
       {isLoading && (
         <div className="loading-state">
           <div className="loading-content">
-            <div className="loading-icon">🔄</div>
-            <h3>Loading Real eBay Data...</h3>
-            <p>Searching your 25-card watchlist for hot deals</p>
+            <div className="loading-icon baseball"></div>
+            <h3>Hunting Unicorns...</h3>
+            <p>Scanning eBay for undervalued cards across your 25-card watchlist</p>
+            <div className="loading-dots">
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+            </div>
+            <div className="loading-status">
+              <span>🔍 Analyzing market data...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ENHANCED Error State */}
+      {error && (
+        <div className="error-state">
+          <h3>Connection Timeout</h3>
+          <p>Unable to connect to eBay marketplace. The cards are waiting for you!</p>
+          <button onClick={loadAuctions} className="retry-btn">
+            Reconnect & Hunt
+          </button>
+        </div>
+      )}
+
+      {/* ENHANCED No Results State */}
+      {!isLoading && !error && sortedAuctions.length === 0 && (
+        <div className="no-results-state">
+          <div className="no-results-content">
+            <div className="no-results-icon">🎯</div>
+            <h3>No Unicorns Found Right Now</h3>
+            <p>The hunt continues! Refresh in a few minutes - rare opportunities appear when you least expect them.</p>
+            <div className="loading-dots">
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+            </div>
           </div>
         </div>
       )}
