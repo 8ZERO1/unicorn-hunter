@@ -1,0 +1,21 @@
+A few issues, and thoughts:
+
+1. On the Hot Auctions page, RAW cards show up as RAW in the type column, should be BIN or AUCTION only.
+2. We need to add the admin to the navigation, we probably should also have a place for the calculator in the navigation, we would use to onboard new cards.
+3. We also need to be able to dismiss cards on hot auctions, and when I dismiss a listing, I don't want that listing to reappear ever again, even on refreshes.
+4. How does the watch feature work?
+5. On a refresh, by default I want max price to be set to All prices, I'd also like under $1000 all the way down to under $100, with $100 incruments, so I can get more granular.
+6. We need a way to remove cards, which probably shouldn't be on the dashboard view, they really should be on a cards section from the navigation.
+7. Dashboard should be a dashboard type view of everything on the site, that's beneficial for us, what do you think would make this cool?
+8. The Historical data collection top is not centered
+9. When click on start data collection on historical data collection, it doesn't scroll on it's own, which it should scroll through the feed.
+10. I'd like to be able to maybe see how many API calls we have made for the day?
+11. 5 Issues are showing on hot-auctions in the bottom right corner under the next.js
+12. On hot auctions Live opportunities • 142 active deals Last updated: 3:56:28 PM is really on top of each other, no good spacing, let's find a new way to display this with that UI / UX modern best in the world approach. Also Loading real auction data... is on top of Hot Auctions - LIVE eBay Data.
+13. When hot auctions is refreshing on load it shows an END emoji, this should be a baseball spinning.
+14. Title on the top left navigation bar should say Sports Card Unicorn Hunter with the same unicorn emoji, then across the top to the right of that random basketball, baseball, soccerball, football, golf ball, hockey puck, emoji's doing something, fun but cool and stunning. Or even on the left side navigation under the navigation buttons, you know what's best with that big UI / UX brain of yours.
+15. We probably should have a filter option on hot auctions, to narrow or focus so we're not as dependant on sort. Thoughts?
+16. Having a button that takes me to a view of sold items that match that title on ebay, and include PSA in the search, so we can easily have a way to validate how much that specific card is selling for a PSA 7-10.
+17. When historicals are working and added, on our new cards page that has all of our cards were hunting, we have a way to view historicals for that card going back 1 year, and we will get that data either by watching it on our hunter to capture it ourselves, or pull it through the API. From the view of per card, have it list what PSA 7 - 10 is currently selling for, and also raw, obviously all averages. List cheapest price sold in past year for PSA 10, and most exspensive sold for a psa 10. Thoughts?
+18. We need to find the sweet spot for what is considered an actual unicorn, and it needs to make a special unicorn alert, as that's what we're hunting. Think of it like we actually are hunting for unicorns, so we just saw one, it's special.
+19. On our cards page, we should even show a picture of the actual card we're hunting for unicorns of.
