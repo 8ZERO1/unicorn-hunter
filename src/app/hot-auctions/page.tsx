@@ -181,7 +181,7 @@ export default function HotAuctionsPage() {
               <span className="title-badge">LIVE eBay Data</span>
             </h1>
             
-<div className="header-status-row">
+            <div className="header-status-row">
               <div className="status-info">
                 {isLoading ? (
                   <div className="loading-indicator">
@@ -210,6 +210,7 @@ export default function HotAuctionsPage() {
                 </div>
               )}
             </div>
+          </div>
           
           {/* Action Section */}
           <div className="header-actions-section">
