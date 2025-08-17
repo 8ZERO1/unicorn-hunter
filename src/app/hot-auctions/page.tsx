@@ -170,72 +170,124 @@ export default function HotAuctionsPage() {
   return (
     <div className="hot-auctions-page">
       {/* Page Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <h1>🔥 Hot Auctions - LIVE eBay Data</h1>
-          <p className="subtitle">
-            {isLoading ? (
-              'Loading real auction data...'
-            ) : error ? (
-              `Error loading data`
-            ) : (
-              <>Live opportunities • {sortedAuctions.length} active deals</>
-            )}
-          </p>
-          {!isLoading && !error && (
-            <p className="last-refresh">
-              Last updated: {lastRefresh.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
-        
-        {/* Refresh Button */}
-        <div className="refresh-controls">
-          <button 
-            onClick={loadAuctions} 
-            disabled={isLoading}
-            className={`refresh-btn ${isLoading ? 'loading' : ''}`}
-          >
-            {isLoading ? '🔄 Refreshing...' : '🔄 Refresh Data'}
-          </button>
-        </div>
-        
-        {/* Quick Controls */}
-        <div className="quick-controls">
-          <div className="control-group">
-            <label>Sort by:</label>
-            <select 
-              value={sortBy} 
-              onChange={(e) => {
-                setSortBy(e.target.value as any);
-                setSortDirection('desc'); // Reset to desc for dropdown changes
-              }}
-              className="sort-select"
-            >
-              <option value="urgency">Ending Soonest</option>
-              <option value="discount">Biggest Discount</option>
-              <option value="roi">Highest ROI</option>
-              <option value="priority">Highest Priority</option>
-              <option value="price">Price</option>
-              <option value="card">Card Name</option>
-              <option value="grade">Grade</option>
-              <option value="type">Type</option>
-              <option value="seller">Seller</option>
-            </select>
+{/* ENHANCED Page Header */}
+      <div className="page-header-enhanced">
+        {/* Main Header Section */}
+        <div className="header-main-section">
+          <div className="header-title-group">
+            <h1 className="page-title">
+              <span className="title-icon">🔥</span>
+              <span className="title-text">Hot Auctions</span>
+              <span className="title-badge">LIVE eBay Data</span>
+            </h1>
+            
+            <div className="header-status-row">
+              <div className="status-info">
+                {isLoading ? (
+                  <div className="loading-indicator">
+                    <span className="loading-spinner">⚡</span>
+                    <span className="status-text loading-text">Scanning eBay for unicorns...</span>
+                  </div>
+                ) : error ? (
+                  <div className="error-indicator">
+                    <span className="error-icon">⚠️</span>
+                    <span className="status-text error-text">Connection error</span>
+                  </div>
+                ) : (
+                  <div className="live-indicator">
+                    <span className="live-dot"></span>
+                    <span className="status-text">
+                      <strong>{sortedAuctions.length}</strong> active opportunities
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {!isLoading && !error && (
+                <div className="last-update">
+                  <span className="update-label">Updated</span>
+                  <span className="update-time">{lastRefresh.toLocaleTimeString()}</span>
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="control-group">
-            <label>Max Price:</label>
-            <select 
-              value={filterBudget} 
-              onChange={(e) => setFilterBudget(Number(e.target.value))}
-              className="budget-select"
+          {/* Action Section */}
+          <div className="header-actions-section">
+            <button 
+              onClick={loadAuctions} 
+              disabled={isLoading}
+              className={`refresh-button ${isLoading ? 'loading' : ''}`}
             >
-              <option value={1000}>Under $1,000</option>
-              <option value={500}>Under $500</option>
-              <option value={200}>Under $200</option>
-              <option value={5000}>All Prices</option>
-            </select>
+              <span className="refresh-icon">{isLoading ? '⚡' : '🔄'}</span>
+              <span className="refresh-text">
+                {isLoading ? 'Scanning...' : 'Refresh'}
+              </span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Controls Section */}
+        <div className="header-controls-section">
+          <div className="controls-grid">
+            <div className="control-item">
+              <label className="control-label">Sort by</label>
+              <select 
+                value={sortBy} 
+                onChange={(e) => {
+                  setSortBy(e.target.value as any);
+                  setSortDirection('desc');
+                }}
+                className="control-select"
+              >
+                <option value="urgency">⏰ Ending Soonest</option>
+                <option value="discount">📉 Biggest Discount</option>
+                <option value="roi">💰 Highest ROI</option>
+                <option value="priority">⭐ Highest Priority</option>
+                <option value="price">💵 Price</option>
+                <option value="card">🎯 Card Name</option>
+                <option value="grade">🏆 Grade</option>
+                <option value="type">📊 Type</option>
+                <option value="seller">👤 Seller</option>
+              </select>
+            </div>
+            
+            <div className="control-item">
+              <label className="control-label">Budget Filter</label>
+              <select 
+                value={filterBudget} 
+                onChange={(e) => setFilterBudget(Number(e.target.value))}
+                className="control-select"
+                >
+                <option value={100}>Under $100</option>
+                <option value={200}>Under $200</option>
+                <option value={300}>Under $300</option>
+                <option value={400}>Under $400</option>
+                <option value={500}>Under $500</option>
+                <option value={600}>Under $600</option>
+                <option value={700}>Under $700</option>
+                <option value={800}>Under $800</option>
+                <option value={900}>Under $900</option>
+                <option value={1000}>Under $1,000</option>
+                <option value={2000}>Under $2,000</option>
+                <option value={10000}>All Prices</option>
+              </select>
+            </div>
+            
+            <div className="control-item">
+              <label className="control-label">Quick Actions</label>
+              <div className="quick-action-buttons">
+                <button className="quick-btn priority-btn" title="High Priority Only">
+                  <span>🔥</span>
+                </button>
+                <button className="quick-btn ending-btn" title="Ending Soon">
+                  <span>⏰</span>
+                </button>
+                <button className="quick-btn discount-btn" title="Big Discounts">
+                  <span>📉</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
