@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Auction } from '../types/auction';
-import { DismissedItem } from '@/types/dismissed-item';
+import { DismissedItem } from '@/lib/types/dismissed-item';
 
 // Initialize Supabase client
 const supabase = createClient(
