@@ -666,7 +666,7 @@ async function transformeBayToAuction(
     // Get market average and calculate ROI/discount (existing logic)
     let mockAveragePrice: number;
     let percentBelowAverage: number;
-    let rawROI: unknown = null;
+    let rawROI: { roi_percentage: number; expected_value: number; grading_cost: number; potential_profit: number; confidence_score: number; uses_real_data: boolean } | null = null;
     let confidence = 0;
     let usesRealData = false;
 

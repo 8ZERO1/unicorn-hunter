@@ -169,7 +169,7 @@ async function searchCompletedItems(query: string, applicationToken: string, lim
       findCompletedItemsResponse: [{
         searchResult: [{
           '@count': (data.total || 0).toString(),
-          item: (data.itemSummaries || []).map((item: EBayItemSummary): TransformedEBayItem => ({
+          item: (data.itemSummaries || []).map((item: { itemId?: string; title?: string; price?: { value: string; currency: string }; itemEndDate?: string; condition?: string; seller?: { username?: string }; itemWebUrl?: string }) => ({
             itemId: item.itemId || 'unknown',
             title: item.title || 'Unknown Title',
             sellingStatus: [{
