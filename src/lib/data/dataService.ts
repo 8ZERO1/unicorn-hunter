@@ -47,6 +47,199 @@ interface eBayItem {
   listingType?: string;
 }
 
+// ==========================================
+// NEW: DISMISS FUNCTIONALITY
+// ==========================================
+
+interface DismissedItem {
+  id: string;
+  ebay_item_id: string;
+  card_id: string;
+  title: string;
+  current_price: number;
+  seller_username: string;
+  dismissed_at: string;
+  expires_at: string;
+  user_notes?: string;
+  card_info?: {
+    player: string;
+    year: number;
+    brand: string;
+    set_name: string;
+  };
+}
+
+// Dismiss an auction item
+export async function dismissAuctionItem(auction: Auction, userNotes?: string): Promise<boolean> {
+  try {
+    console.log(`🗑️ DISMISSING ITEM: ${auction.title.substring(0, 50)}... (ID: ${auction.listing_id})`);
+    
+    const dismissedItem = {
+      ebay_item_id: auction.listing_id,
+      card_id: auction.card_id,
+      title: auction.title,
+      current_price: auction.current_price,
+      seller_username: auction.seller_username,
+      user_notes: userNotes || null
+    };
+
+    const { data, error } = await supabase
+      .from('dismissed_items')
+      .insert(dismissedItem)
+      .select();
+
+    if (error) {
+      console.error('❌ Error dismissing item:', error);
+      return false;
+    }
+
+    console.log(`✅ Successfully dismissed item: ${auction.title.substring(0, 50)}...`);
+    console.log(`⏰ Will expire in 30 days: ${data?.[0]?.expires_at}`);
+    
+    return true;
+  } catch (error) {
+    console.error('💥 Error in dismissAuctionItem:', error);
+    return false;
+  }
+}
+
+// Check if an item is currently dismissed (and not expired)
+export async function isItemDismissed(ebayItemId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('dismissed_items')
+      .select('id, expires_at')
+      .eq('ebay_item_id', ebayItemId)
+      .gt('expires_at', new Date().toISOString()) // Only non-expired dismissals
+      .limit(1);
+
+    if (error) {
+      console.error('❌ Error checking if item is dismissed:', error);
+      return false;
+    }
+
+    const isDismissed = data && data.length > 0;
+    if (isDismissed) {
+      console.log(`🚫 Item ${ebayItemId} is currently dismissed (expires: ${data[0].expires_at})`);
+    }
+    
+    return isDismissed;
+  } catch (error) {
+    console.error('💥 Error in isItemDismissed:', error);
+    return false;
+  }
+}
+
+// Get all dismissed items (for admin interface)
+export async function getDismissedItems(includeExpired: boolean = false): Promise<DismissedItem[]> {
+  try {
+    console.log(`📋 FETCHING dismissed items (includeExpired: ${includeExpired})`);
+    
+    let query = supabase
+      .from('dismissed_items')
+      .select(`
+        *,
+        cards!inner(
+          player,
+          year,
+          brand,
+          set_name
+        )
+      `)
+      .order('dismissed_at', { ascending: false });
+
+    if (!includeExpired) {
+      query = query.gt('expires_at', new Date().toISOString());
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('❌ Error fetching dismissed items:', error);
+      return [];
+    }
+
+    const dismissedItems = data?.map((item: any) => ({
+      id: item.id,
+      ebay_item_id: item.ebay_item_id,
+      card_id: item.card_id,
+      title: item.title,
+      current_price: item.current_price,
+      seller_username: item.seller_username,
+      dismissed_at: item.dismissed_at,
+      expires_at: item.expires_at,
+      user_notes: item.user_notes,
+      card_info: {
+        player: item.cards.player,
+        year: item.cards.year,
+        brand: item.cards.brand,
+        set_name: item.cards.set_name
+      }
+    })) || [];
+
+    console.log(`📊 Found ${dismissedItems.length} dismissed items`);
+    return dismissedItems;
+    
+  } catch (error) {
+    console.error('💥 Error in getDismissedItems:', error);
+    return [];
+  }
+}
+
+// Restore a dismissed item (remove from dismissed_items table)
+export async function restoreDismissedItem(dismissedItemId: string): Promise<boolean> {
+  try {
+    console.log(`🔄 RESTORING dismissed item: ${dismissedItemId}`);
+    
+    const { error } = await supabase
+      .from('dismissed_items')
+      .delete()
+      .eq('id', dismissedItemId);
+
+    if (error) {
+      console.error('❌ Error restoring dismissed item:', error);
+      return false;
+    }
+
+    console.log(`✅ Successfully restored dismissed item: ${dismissedItemId}`);
+    return true;
+    
+  } catch (error) {
+    console.error('💥 Error in restoreDismissedItem:', error);
+    return false;
+  }
+}
+
+// Cleanup expired dismissals (call periodically)
+export async function cleanupExpiredDismissals(): Promise<number> {
+  try {
+    console.log('🧹 CLEANING UP expired dismissals...');
+    
+    const { data, error } = await supabase
+      .from('dismissed_items')
+      .delete()
+      .lt('expires_at', new Date().toISOString())
+      .select('id');
+
+    if (error) {
+      console.error('❌ Error cleaning up expired dismissals:', error);
+      return 0;
+    }
+
+    const cleanedCount = data?.length || 0;
+    console.log(`✅ Cleaned up ${cleanedCount} expired dismissals`);
+    return cleanedCount;
+    
+  } catch (error) {
+    console.error('💥 Error in cleanupExpiredDismissals:', error);
+    return 0;
+  }
+}
+
+// ==========================================
+// EXISTING FUNCTIONS (UNCHANGED)
+// ==========================================
+
 // Enhanced search query building with comprehensive negative keywords
 function buildSearchQuery(card: DatabaseCard): string {
   const parts = [
@@ -697,7 +890,7 @@ export async function clearAndRecollectHistoricalData(): Promise<boolean> {
   }
 }
 
-// Enhanced main function with raw card support
+// ENHANCED: Enhanced main function with raw card support AND dismiss filtering
 export async function getHotAuctions(): Promise<Auction[]> {
   try {
     console.log('🔄 Fetching cards from database...');
@@ -721,6 +914,12 @@ export async function getHotAuctions(): Promise<Auction[]> {
 
     console.log(`📊 Found ${cards.length} active cards, starting ENHANCED TRIPLE SEARCH system...`);
 
+    // 🧹 First, cleanup expired dismissals (maintenance)
+    const cleanedCount = await cleanupExpiredDismissals();
+    if (cleanedCount > 0) {
+      console.log(`🧹 Auto-cleaned ${cleanedCount} expired dismissals`);
+    }
+
     const allAuctions: Auction[] = [];
 
     // Process all 25 cards with triple search
@@ -734,6 +933,13 @@ export async function getHotAuctions(): Promise<Auction[]> {
       
       for (const item of eBayItems) {
         console.log(`🔄 Processing item: ${item.title.substring(0, 50)}...`);
+        
+        // ✅ NEW: Check if item is dismissed before processing
+        const isDismissed = await isItemDismissed(item.itemId);
+        if (isDismissed) {
+          console.log(`🚫 SKIPPING dismissed item: ${item.title.substring(0, 50)}...`);
+          continue;
+        }
         
         // ENHANCED: Better search type determination
         const gradeInfo = extractGradeInfo(item.title);
@@ -790,7 +996,7 @@ export async function getHotAuctions(): Promise<Auction[]> {
       return bPriority - aPriority;
     });
 
-    console.log(`✅ ENHANCED TRIPLE SEARCH COMPLETE: Found ${sortedAuctions.length} total unicorns (with improved raw card filtering)`);
+    console.log(`✅ ENHANCED TRIPLE SEARCH COMPLETE: Found ${sortedAuctions.length} total unicorns (with dismiss filtering)`);
     return sortedAuctions.slice(0, 200);
 
   } catch (error) {
@@ -800,8 +1006,8 @@ export async function getHotAuctions(): Promise<Auction[]> {
 }
 
 // ==========================================
-// ADD THIS ENTIRE SECTION TO THE BOTTOM OF YOUR dataService.ts FILE
-// (After the closing brace } of your getHotAuctions function)
+// HISTORICAL DATA COLLECTION FUNCTIONS
+// (Keeping all existing functions unchanged)
 // ==========================================
 
 interface CompletedSale {
