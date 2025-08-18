@@ -179,25 +179,19 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems: DismissedItem[] = data?.map((item) => ({
+    const dismissedItems: DismissedItem[] = data?.map((item: any) => ({
       id: item.id,
       ebay_item_id: item.ebay_item_id,
-      card_id: item.card_id,
       title: item.title,
       current_price: item.current_price,
-      seller_username: item.seller_username,
       dismissed_at: item.dismissed_at,
       expires_at: item.expires_at,
-      user_notes: item.user_notes,
-      card_player: item.cards.player,
-      card_year: item.cards.year,
-      card_brand: item.cards.brand,
-      set_name: item.cards.set_name,
-      days_remaining: Math.ceil(
-        (new Date(item.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-      ),
-      ebay_url: `https://www.ebay.com/itm/${item.ebay_item_id}`,
-      image_url: `https://i.ebayimg.com/images/g/${item.ebay_item_id}/s-l500.jpg` // adjust if you have a real image source
+      card_player: item.cards?.player || '',
+      card_year: item.cards?.year || '',
+      card_brand: item.cards?.brand || '',
+      days_remaining: Math.max(0, Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+      ebay_url: item.ebay_url || '',
+      image_url: item.image_url || ''
     })) || [];
 
     console.log(`📊 Found ${dismissedItems.length} dismissed items`);
