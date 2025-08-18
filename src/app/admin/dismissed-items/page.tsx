@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { getDismissedItems, restoreDismissedItem } from '../../../lib/data/dataService';
 import Image from 'next/image';
 import { DismissedItem } from '@/types/dismissed-item';
-const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);
 
 export default function DismissedItemsAdmin() {
   const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);
