@@ -24,6 +24,25 @@ export default function DismissedItemsAdmin() {
     return () => clearInterval(interval);
   }, []);
 
+  // inside getDismissedItems()
+const dismissedItems: DismissedItemType[] = data?.map((item: DismissedItemRow) => ({
+  id: item.id,
+  ebay_item_id: item.ebay_item_id,
+  title: item.title,
+  current_price: item.current_price,
+  dismissed_at: item.dismissed_at,
+  expires_at: item.expires_at,
+  card_player: item.cards?.player || '',
+  card_year: item.cards?.year || '',
+  card_brand: item.cards?.brand || '',
+  days_remaining: Math.max(
+    0,
+    Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  ),
+  ebay_url: item.ebay_url || '',
+  image_url: item.image_url || ''
+})) as DismissedItemType[]; // ← explicit cast
+
   const loadDismissedItems = async () => {
     try {
       setLoading(true);
