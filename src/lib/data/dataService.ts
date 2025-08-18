@@ -144,7 +144,8 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
           player,
           year,
           brand,
-          set_name
+          set_name,
+          image_url
         )
       `)
       .order('dismissed_at', { ascending: false });
@@ -160,23 +161,20 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems = data?.map((item: unknown) => ({
+    const dismissedItems: DismissedItem[] = (data || []).map((item: any) => ({
       id: item.id,
       ebay_item_id: item.ebay_item_id,
-      card_id: item.card_id,
       title: item.title,
       current_price: item.current_price,
-      seller_username: item.seller_username,
       dismissed_at: item.dismissed_at,
       expires_at: item.expires_at,
-      user_notes: item.user_notes,
-      card_info: {
-        player: item.cards.player,
-        year: item.cards.year,
-        brand: item.cards.brand,
-        set_name: item.cards.set_name
-      }
-    })) || [];
+      card_player: item.cards.player,
+      card_year: item.cards.year,
+      card_brand: item.cards.brand,
+      days_remaining: Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      ebay_url: item.ebay_url || '', // replace with actual field if exists
+      image_url: item.cards.image_url || ''
+    }));
 
     console.log(`📊 Found ${dismissedItems.length} dismissed items`);
     return dismissedItems;
