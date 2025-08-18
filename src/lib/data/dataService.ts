@@ -161,7 +161,8 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems: DismissedItem[] = (data || []).map((item: any) => ({
+    const dismissedItems: DismissedItem[] = (data || []).map((item: Record<string, any>) => ({
+
       id: item.id,
       ebay_item_id: item.ebay_item_id,
       title: item.title,
