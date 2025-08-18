@@ -15,33 +15,13 @@ export default function DismissedItemsAdmin() {
 
   useEffect(() => {
     loadDismissedItems();
-    
-    // Auto-refresh every 3 minutes to update expiration times
+
     const interval = setInterval(() => {
       loadDismissedItems();
-    }, 3 * 60 * 1000); // 3 minutes
+    }, 3 * 60 * 1000); // refresh every 3 minutes
 
     return () => clearInterval(interval);
   }, []);
-
-  // inside getDismissedItems()
-const dismissedItems: DismissedItemType[] = data?.map((item: DismissedItemRow) => ({
-  id: item.id,
-  ebay_item_id: item.ebay_item_id,
-  title: item.title,
-  current_price: item.current_price,
-  dismissed_at: item.dismissed_at,
-  expires_at: item.expires_at,
-  card_player: item.cards?.player || '',
-  card_year: item.cards?.year || '',
-  card_brand: item.cards?.brand || '',
-  days_remaining: Math.max(
-    0,
-    Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  ),
-  ebay_url: item.ebay_url || '',
-  image_url: item.image_url || ''
-})) as DismissedItemType[]; // ← explicit cast
 
   const loadDismissedItems = async () => {
     try {
@@ -59,7 +39,6 @@ const dismissedItems: DismissedItemType[] = data?.map((item: DismissedItemRow) =
     try {
       setRestoring(itemId);
       await restoreDismissedItem(itemId);
-      // Remove from local state
       setDismissedItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
       console.error('Error restoring item:', error);
@@ -72,18 +51,15 @@ const dismissedItems: DismissedItemType[] = data?.map((item: DismissedItemRow) =
   const handleCleanupExpired = async () => {
     try {
       setCleaningUp(true);
-      // Filter out expired items using calculated days remaining
       const expiredItems = dismissedItems.filter(item => calculateDaysRemaining(item.expires_at) <= 0);
-      
+
       if (expiredItems.length === 0) {
         alert('No expired items to clean up!');
         return;
       }
 
-      // Call cleanup function from dataService (we'll need to add this)
-      // For now, remove expired items from local state
       setDismissedItems(prev => prev.filter(item => calculateDaysRemaining(item.expires_at) > 0));
-      
+
       alert(`Successfully cleaned up ${expiredItems.length} expired dismissal(s).`);
     } catch (error) {
       console.error('Error cleaning up expired items:', error);
