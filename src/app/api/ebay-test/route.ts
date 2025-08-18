@@ -1,5 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Define interfaces for eBay API responses
+interface EBayItemSummary {
+  itemId: string;
+  title: string;
+  price?: {
+    value: string;
+    currency: string;
+  };
+  condition?: string;
+  seller?: {
+    username: string;
+    feedbackPercentage?: string;
+    feedbackScore?: number;
+  };
+  itemWebUrl: string;
+  itemEndDate?: string;
+  image?: {
+    imageUrl: string;
+  };
+  buyingOptions?: string[];
+}
+
+interface EBayBrowseApiResponse {
+  total?: number;
+  itemSummaries?: EBayItemSummary[];
+}
+
+interface TransformedEBayItem {
+  itemId: string;
+  title: string;
+  sellingStatus: Array<{
+    currentPrice: Array<{
+      __value__: string;
+      '@currencyId': string;
+    }>;
+  }>;
+  listingInfo: Array<{
+    endTime: string[];
+  }>;
+  condition: Array<{
+    conditionDisplayName: string[];
+  }>;
+  sellerInfo: Array<{
+    sellerUserName: string[];
+  }>;
+  viewItemURL: string[];
+}
+
 // Cache for application token
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -78,13 +126,11 @@ async function searchCompletedItems(query: string, applicationToken: string, lim
     category_ids: '212', // Sports Trading Cards
     sort: 'EndTimeSoonest',
     // KEY FIX: Filter for sold items only - this gets completed sales
-    filter: 'conditions:{USED,NEW},soldItems:true',
-    // NEW: Request image data for historical collection
-    fieldgroups: 'EXTENDED'
+    filter: 'conditions:{USED,NEW},soldItems:true'
   });
 
   const fullUrl = `${browseApiUrl}?${searchParams}`;
-  console.log('📡 Making Browse API request for completed sales with image data');
+  console.log('📡 Making Browse API request for completed sales');
   console.log('🔑 Using App ID:', clientId.substring(0, 8) + '...');
 
   try {
@@ -114,7 +160,7 @@ async function searchCompletedItems(query: string, applicationToken: string, lim
       }
     }
 
-    const data = await response.json();
+    const data: EBayBrowseApiResponse = await response.json();
     
     console.log('✅ HISTORICAL DATA: Found', data.total || 0, 'completed sales via Browse API');
     
@@ -123,9 +169,9 @@ async function searchCompletedItems(query: string, applicationToken: string, lim
       findCompletedItemsResponse: [{
         searchResult: [{
           '@count': (data.total || 0).toString(),
-          item: (data.itemSummaries || []).map((item: any) => ({
-            itemId: [item.itemId || 'unknown'],
-            title: [item.title || 'Unknown Title'],
+          item: (data.itemSummaries || []).map((item: EBayItemSummary): TransformedEBayItem => ({
+            itemId: item.itemId || 'unknown',
+            title: item.title || 'Unknown Title',
             sellingStatus: [{
               currentPrice: [{
                 __value__: item.price?.value || '0.00',
@@ -141,16 +187,13 @@ async function searchCompletedItems(query: string, applicationToken: string, lim
             sellerInfo: [{
               sellerUserName: [item.seller?.username || 'unknown_seller']
             }],
-            viewItemURL: [item.itemWebUrl || `https://www.ebay.com/itm/${item.itemId}`],
-            // NEW: Include image data in historical collection
-            galleryURL: [item.image?.imageUrl || ''],
-            pictureURLLarge: [item.image?.imageUrl || '']
+            viewItemURL: [item.itemWebUrl || `https://www.ebay.com/itm/${item.itemId}`]
           }))
         }]
       }],
       isRealData: true,
       hasResults: (data.total || 0) > 0,
-      apiUsed: 'Browse API (soldItems filter with images)'
+      apiUsed: 'Browse API (soldItems filter)'
     };
     
     return transformedData;
@@ -246,7 +289,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // ENHANCED: Browse API for live listings with IMAGE DATA
+    // EXISTING: Browse API for live listings (unchanged from your original)
     console.log(`🔍 eBay API: ${searchType.toUpperCase()} search for:`, query.substring(0, 100) + '...');
 
     const ebayApiUrl = 'https://api.ebay.com/buy/browse/v1/item_summary/search';
@@ -259,22 +302,20 @@ export async function POST(request: NextRequest) {
       q: enhancedQuery,
       limit: limit.toString(),
       category_ids: '212',
-      sort: 'EndTimeSoonest',
-      // NEW: Request extended data including images
-      fieldgroups: 'EXTENDED'
+      sort: 'EndTimeSoonest'
     });
 
     // Apply filter based on search type
     if (searchType === 'auction') {
       searchParams.set('filter', 'buyingOptions:{AUCTION}');
-      console.log('🔨 Searching auctions only with image data');
+      console.log('🔨 Searching auctions only');
     } else if (searchType === 'bin') {
-      console.log('💎 Searching BIN only with image data');
+      console.log('💎 Searching BIN only');
     } else if (searchType === 'raw') {
-      console.log('🎯 Searching RAW cards only with image data');
+      console.log('🎯 Searching RAW cards only');
       searchParams.set('filter', 'conditionIds:{1000,1500,2000,2500,3000}');
     } else {
-      console.log('🔄 Mixed search with image data (default)');
+      console.log('🔄 Mixed search (default)');
     }
 
     const fullUrl = `${ebayApiUrl}?${searchParams}`;
@@ -299,17 +340,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await ebayResponse.json();
-    console.log(`✅ ${searchType.toUpperCase()} search found:`, data.total || 0, 'items with image data support');
-    
-    // Log image data availability for debugging
-    if (data.itemSummaries && data.itemSummaries.length > 0) {
-      const firstItem = data.itemSummaries[0];
-      if (firstItem.image) {
-        console.log('📸 Image data available:', firstItem.image.imageUrl ? 'YES' : 'NO');
-      } else {
-        console.log('📸 Image data available: NO');
-      }
-    }
+    console.log(`✅ ${searchType.toUpperCase()} search found:`, data.total || 0, 'items');
     
     return NextResponse.json(data);
 
