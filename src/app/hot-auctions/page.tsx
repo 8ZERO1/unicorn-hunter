@@ -1,9 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getHotAuctions } from '../../lib/data/dataService';
+import { getHotAuctions, dismissAuctionItem } from '../../lib/data/dataService';
 import { Auction } from '../../lib/types/auction';
 import { CountdownTimer } from '../../components/CountdownTimer';
+
+interface DismissState {
+  [key: string]: 'idle' | 'confirming' | 'dismissing' | 'dismissed';
+}
+
+interface FadingState {
+  [key: string]: boolean;
+}
 
 export default function HotAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -13,6 +21,11 @@ export default function HotAuctionsPage() {
   const [sortBy, setSortBy] = useState<'urgency' | 'discount' | 'priority' | 'price' | 'card' | 'grade' | 'type' | 'seller' | 'roi'>('urgency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterBudget, setFilterBudget] = useState<number>(1000);
+
+  // NEW: Dismiss functionality state
+  const [dismissStates, setDismissStates] = useState<DismissState>({});
+  const [fadingItems, setFadingItems] = useState<FadingState>({});
+  const [dismissErrors, setDismissErrors] = useState<{[key: string]: string}>({});
 
   // Load auctions on component mount
   useEffect(() => {
@@ -28,11 +41,148 @@ export default function HotAuctionsPage() {
       setAuctions(data);
       setLastRefresh(new Date());
       console.log(`✅ Loaded ${data.length} hot auctions`);
+      
+      // Reset dismiss states when new data loads
+      setDismissStates({});
+      setFadingItems({});
+      setDismissErrors({});
     } catch (err) {
       console.error('Error loading auctions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load auctions');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // NEW: Handle dismiss button clicks
+  const handleDismissClick = async (auction: Auction) => {
+    const itemId = auction.listing_id;
+    const currentState = dismissStates[itemId] || 'idle';
+
+    if (currentState === 'idle') {
+      // First click: Show confirmation (green checkmark)
+      setDismissStates(prev => ({
+        ...prev,
+        [itemId]: 'confirming'
+      }));
+      
+      // Auto-reset confirmation after 5 seconds if no second click
+      setTimeout(() => {
+        setDismissStates(prev => {
+          if (prev[itemId] === 'confirming') {
+            return { ...prev, [itemId]: 'idle' };
+          }
+          return prev;
+        });
+      }, 5000);
+      
+    } else if (currentState === 'confirming') {
+      // Second click: Actually dismiss the item
+      setDismissStates(prev => ({
+        ...prev,
+        [itemId]: 'dismissing'
+      }));
+
+      try {
+        console.log(`🗑️ DISMISSING: ${auction.title.substring(0, 50)}...`);
+        
+        const success = await dismissAuctionItem(auction, 'Dismissed from Hot Auctions interface');
+        
+        if (success) {
+          // Start fade-out animation
+          setFadingItems(prev => ({ ...prev, [itemId]: true }));
+          
+          // After animation completes, remove from list
+          setTimeout(() => {
+            setAuctions(prev => prev.filter(a => a.listing_id !== itemId));
+            setFadingItems(prev => {
+              const newState = { ...prev };
+              delete newState[itemId];
+              return newState;
+            });
+            setDismissStates(prev => {
+              const newState = { ...prev };
+              delete newState[itemId];
+              return newState;
+            });
+          }, 500); // Match CSS animation duration
+          
+          console.log(`✅ Successfully dismissed: ${auction.title.substring(0, 50)}...`);
+          
+        } else {
+          // Handle error
+          setDismissErrors(prev => ({
+            ...prev,
+            [itemId]: 'Failed to dismiss item. Please try again.'
+          }));
+          setDismissStates(prev => ({
+            ...prev,
+            [itemId]: 'idle'
+          }));
+          
+          // Clear error after 3 seconds
+          setTimeout(() => {
+            setDismissErrors(prev => {
+              const newState = { ...prev };
+              delete newState[itemId];
+              return newState;
+            });
+          }, 3000);
+        }
+        
+      } catch (error) {
+        console.error('Error dismissing item:', error);
+        setDismissErrors(prev => ({
+          ...prev,
+          [itemId]: 'Network error. Please try again.'
+        }));
+        setDismissStates(prev => ({
+          ...prev,
+          [itemId]: 'idle'
+        }));
+      }
+    }
+  };
+
+  // NEW: Get dismiss button display
+  const getDismissButtonContent = (auction: Auction) => {
+    const itemId = auction.listing_id;
+    const state = dismissStates[itemId] || 'idle';
+    const error = dismissErrors[itemId];
+
+    if (error) {
+      return {
+        text: 'Error',
+        className: 'btn btn-error',
+        disabled: false
+      };
+    }
+
+    switch (state) {
+      case 'confirming':
+        return {
+          text: '✓',
+          className: 'btn btn-confirm',
+          disabled: false
+        };
+      case 'dismissing':
+        return {
+          text: '⏳',
+          className: 'btn btn-dismissing',
+          disabled: true
+        };
+      case 'dismissed':
+        return {
+          text: '✓',
+          className: 'btn btn-dismissed',
+          disabled: true
+        };
+      default:
+        return {
+          text: 'Dismiss',
+          className: 'btn btn-dismiss',
+          disabled: false
+        };
     }
   };
 
@@ -169,7 +319,6 @@ export default function HotAuctionsPage() {
 
   return (
     <div className="hot-auctions-page">
-      {/* Page Header */}
 {/* ENHANCED Page Header */}
       <div className="page-header-enhanced">
         {/* Main Header Section */}
@@ -397,8 +546,16 @@ export default function HotAuctionsPage() {
               {sortedAuctions.map((auction) => {
                 const discountDisplay = getDiscountDisplay(auction);
                 const roiDisplay = getROIDisplay(auction);
+                const dismissButton = getDismissButtonContent(auction);
+                const isConfirming = dismissStates[auction.listing_id] === 'confirming';
+                const isFading = fadingItems[auction.listing_id];
+                const dismissError = dismissErrors[auction.listing_id];
+                
                 return (
-                  <tr key={auction.id} className={`auction-row ${getUrgencyClass(auction.time_remaining_hours)}`}>
+                  <tr 
+                    key={auction.id} 
+                    className={`auction-row ${getUrgencyClass(auction.time_remaining_hours)} ${isFading ? 'fading-out' : ''} ${isConfirming ? 'confirming-dismiss' : ''}`}
+                  >
                     <td className="urgency-cell">
                       <CountdownTimer 
                         initialHours={auction.time_remaining_hours}
@@ -485,7 +642,17 @@ export default function HotAuctionsPage() {
                           View on eBay
                         </a>
                         <button className="btn btn-secondary">Watch</button>
-                        <button className="btn btn-dismiss">Dismiss</button>
+                        <button 
+                          className={dismissButton.className}
+                          disabled={dismissButton.disabled}
+                          onClick={() => handleDismissClick(auction)}
+                          title={isConfirming ? 'Click again to confirm dismissal' : 'Dismiss this item'}
+                        >
+                          {dismissButton.text}
+                        </button>
+                        {dismissError && (
+                          <div className="dismiss-error">{dismissError}</div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -502,8 +669,16 @@ export default function HotAuctionsPage() {
           {sortedAuctions.map((auction) => {
             const discountDisplay = getDiscountDisplay(auction);
             const roiDisplay = getROIDisplay(auction);
+            const dismissButton = getDismissButtonContent(auction);
+            const isConfirming = dismissStates[auction.listing_id] === 'confirming';
+            const isFading = fadingItems[auction.listing_id];
+            const dismissError = dismissErrors[auction.listing_id];
+            
             return (
-              <div key={auction.id} className={`auction-card ${getUrgencyClass(auction.time_remaining_hours)}`}>
+              <div 
+                key={auction.id} 
+                className={`auction-card ${getUrgencyClass(auction.time_remaining_hours)} ${isFading ? 'fading-out' : ''} ${isConfirming ? 'confirming-dismiss' : ''}`}
+              >
                 <div className="card-header">
                   <div className="urgency-badge">
                     <CountdownTimer 
@@ -562,6 +737,10 @@ export default function HotAuctionsPage() {
                   <div className="seller-info">
                     {auction.seller_username} • {auction.seller_positive_percentage}% ({auction.seller_feedback_score})
                   </div>
+                  
+                  {dismissError && (
+                    <div className="mobile-dismiss-error">{dismissError}</div>
+                  )}
                 </div>
                 
                 <div className="card-actions">
@@ -575,7 +754,14 @@ export default function HotAuctionsPage() {
                   </a>
                   <div className="action-row">
                     <button className="btn btn-secondary">👁️ Watch</button>
-                    <button className="btn btn-dismiss">✖️ Dismiss</button>
+                    <button 
+                      className={`${dismissButton.className} mobile-dismiss`}
+                      disabled={dismissButton.disabled}
+                      onClick={() => handleDismissClick(auction)}
+                      title={isConfirming ? 'Tap again to confirm' : 'Dismiss this item'}
+                    >
+                      {isConfirming ? '✓ Confirm?' : dismissButton.text === '✓' ? '✓' : '✖️ Dismiss'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -583,6 +769,156 @@ export default function HotAuctionsPage() {
           })}
         </div>
       )}
+
+      {/* NEW: Enhanced CSS for dismiss functionality */}
+      <style jsx>{`
+        /* Dismiss button states */
+        .btn-dismiss {
+          background: #64748b;
+          color: white;
+          border: 1px solid #475569;
+          transition: all 0.3s ease;
+        }
+
+        .btn-dismiss:hover {
+          background: #ef4444;
+          border-color: #dc2626;
+          transform: translateY(-1px);
+        }
+
+        .btn-confirm {
+          background: #22c55e !important;
+          border-color: #16a34a !important;
+          color: white !important;
+          animation: confirmPulse 1s ease-in-out infinite alternate;
+          box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-dismissing {
+          background: #f59e0b;
+          border-color: #d97706;
+          color: white;
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .btn-dismissed {
+          background: #10b981;
+          border-color: #059669;
+          color: white;
+          opacity: 0.8;
+          cursor: not-allowed;
+        }
+
+        .btn-error {
+          background: #ef4444;
+          border-color: #dc2626;
+          color: white;
+          animation: errorShake 0.5s ease-in-out;
+        }
+
+        /* Row states */
+        .confirming-dismiss {
+          background: rgba(34, 197, 94, 0.05) !important;
+          border-left: 3px solid #22c55e;
+          animation: confirmGlow 2s ease-in-out infinite alternate;
+        }
+
+        .fading-out {
+          opacity: 0;
+          transform: translateX(-20px);
+          transition: all 0.5s ease-out;
+          pointer-events: none;
+        }
+
+        /* Error display */
+        .dismiss-error {
+          position: absolute;
+          background: #ef4444;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          bottom: -25px;
+          left: 0;
+          white-space: nowrap;
+          z-index: 10;
+          animation: errorFadeIn 0.3s ease-out;
+        }
+
+        .mobile-dismiss-error {
+          background: #ef4444;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          margin-top: 8px;
+          text-align: center;
+          animation: errorFadeIn 0.3s ease-out;
+        }
+
+        /* Animations */
+        @keyframes confirmPulse {
+          0% { 
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+            transform: scale(1);
+          }
+          100% { 
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
+            transform: scale(1.02);
+          }
+        }
+
+        @keyframes confirmGlow {
+          0% { background: rgba(34, 197, 94, 0.03); }
+          100% { background: rgba(34, 197, 94, 0.08); }
+        }
+
+        @keyframes errorShake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+
+        @keyframes errorFadeIn {
+          0% { 
+            opacity: 0; 
+            transform: translateY(-10px); 
+          }
+          100% { 
+            opacity: 1; 
+            transform: translateY(0); 
+          }
+        }
+
+        /* Mobile specific styles */
+        .mobile-dismiss {
+          min-width: 80px;
+          text-align: center;
+        }
+
+        /* Action buttons relative positioning for error display */
+        .action-buttons {
+          position: relative;
+        }
+
+        /* Enhanced button spacing and layout */
+        .action-buttons .btn {
+          margin-right: 8px;
+        }
+
+        .action-buttons .btn:last-child {
+          margin-right: 0;
+        }
+
+        /* Responsive button sizes */
+        @media (max-width: 768px) {
+          .mobile-dismiss {
+            font-size: 0.875rem;
+            padding: 8px 12px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
