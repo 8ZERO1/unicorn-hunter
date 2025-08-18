@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDismissedItems, restoreDismissedItem } from '../../../lib/data/dataService';
+import Image from 'next/image';
 
 interface DismissedItem {
   id: string;
@@ -18,13 +19,11 @@ interface DismissedItem {
   image_url: string;
 }
 
-type SortByOption = 'recent' | 'expiring' | 'price';
-
 export default function DismissedItemsAdmin() {
   const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<SortByOption>('recent');
+  const [sortBy, setSortBy] = useState<'recent' | 'expiring' | 'price'>('recent');
   const [restoring, setRestoring] = useState<string | null>(null);
   const [cleaningUp, setCleaningUp] = useState(false);
 
@@ -211,7 +210,7 @@ export default function DismissedItemsAdmin() {
             <label className="sort-label">Sort by:</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortByOption)}
+              onChange={(e) => setSortBy(e.target.value as 'recent' | 'expiring' | 'price')}
               className="sort-select"
             >
               <option value="recent">Recently Dismissed</option>
@@ -257,24 +256,21 @@ export default function DismissedItemsAdmin() {
                     <div className="col-image">
                       <div className="card-image-wrapper">
                         {item.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img 
+                          <Image 
                             src={item.image_url} 
                             alt={item.title}
+                            width={60}
+                            height={60}
                             className="card-image"
-                            onError={(e) => {
-                              // Fallback to card emoji if image fails to load
-                              e.currentTarget.style.display = 'none';
-                              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (nextElement) {
-                                nextElement.style.display = 'flex';
-                              }
+                            onError={() => {
+                              // Fallback handled by Next.js Image component
                             }}
                           />
-                        ) : null}
-                        <div className="card-placeholder" style={{display: item.image_url ? 'none' : 'flex'}}>
-                          🃏
-                        </div>
+                        ) : (
+                          <div className="card-placeholder">
+                            🃏
+                          </div>
+                        )}
                       </div>
                     </div>
                     
