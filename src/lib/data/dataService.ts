@@ -150,28 +150,31 @@ interface SupabaseDismissedItem {
   };
 }
 
+import { supabase } from './supabaseClient';
+import { DismissedItem } from '@/lib/types/dismissed-item';
+
+interface DismissedItemRow {
+  id: string;
+  ebay_item_id: string;
+  title: string;
+  current_price: number;
+  dismissed_at: string;
+  expires_at: string;
+  ebay_url?: string;
+  image_url?: string;
+  cards?: {
+    player?: string;
+    year?: string;
+    brand?: string;
+    set_name?: string;
+  };
+}
+
 // Get all dismissed items (for admin interface)
 export async function getDismissedItems(includeExpired: boolean = false): Promise<DismissedItem[]> {
   try {
     console.log(`📋 FETCHING dismissed items (includeExpired: ${includeExpired})`);
-
-    type DismissedItemRow = {
-      id: string;
-      ebay_item_id: string;
-      title: string;
-      current_price: number;
-      dismissed_at: string;
-      expires_at: string;
-      ebay_url?: string;
-      image_url?: string;
-      cards?: {
-        player?: string;
-        year?: string;
-        brand?: string;
-        set_name?: string;
-      };
-    };
-
+    
     let query = supabase
       .from('dismissed_items')
       .select(`
@@ -196,7 +199,7 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems: DismissedItem[] = data?.map((item: DismissedItemRow) => ({
+    const dismissedItems: DismissedItem[] = (data as DismissedItemRow[])?.map(item => ({
       id: item.id,
       ebay_item_id: item.ebay_item_id,
       title: item.title,
