@@ -3,21 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getDismissedItems, restoreDismissedItem } from '../../../lib/data/dataService';
 import Image from 'next/image';
-
-interface DismissedItem {
-  id: string;
-  ebay_item_id: string;
-  title: string;
-  current_price: number;
-  dismissed_at: string;
-  expires_at: string;
-  card_player: string;
-  card_year: string;
-  card_brand: string;
-  days_remaining: number;
-  ebay_url: string;
-  image_url: string;
-}
+import { DismissedItem } from '@/types/dismissed-item';
+const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);
 
 export default function DismissedItemsAdmin() {
   const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);

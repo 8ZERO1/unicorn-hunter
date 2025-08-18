@@ -79,3 +79,21 @@ export interface eBayItem {
     imageUrl: string;
   }>;
 }
+
+export interface DismissedItem {
+  id: string;
+  ebay_item_id: string;
+  card_id: string;
+  title: string;
+  current_price: number;
+  seller_username: string;
+  dismissed_at: string;
+  expires_at: string;
+  user_notes?: string;
+  card_info?: {
+    player: string;
+    year: number;
+    brand: string;
+    set_name: string;
+  };
+}

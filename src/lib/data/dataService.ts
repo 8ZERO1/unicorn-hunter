@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Auction } from '../types/auction';
+import { DismissedItem } from '@/types/dismissed-item';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -1325,7 +1326,7 @@ async function collectHistoricalDataForCard(card: DatabaseCard): Promise<PriceSn
 
 // NEW: Parse completed sales with KNOWN grader/grade (don't extract from title)
 function parseCompletedSalesWithKnownGrade(
-  findingApiResponse: unknown, 
+  findingApiResponse: { findCompletedItemsResponse?: Array<{ searchResult?: Array<{ '@count'?: string; item?: Array<unknown> }> }> },
   card: DatabaseCard,
   knownGrader: string,
   knownGrade: string
