@@ -274,7 +274,7 @@ export default function HotAuctionsPage() {
         </div>
       )}
 
-      {/* Desktop Table View - ENHANCED WITH IMAGE COLUMN */}
+      {/* Desktop Table View - FIXED WITH IMAGE COLUMN */}
       {!isLoading && !error && sortedAuctions.length > 0 && (
         <div className="desktop-table">
           <table className="auctions-table-with-images">
