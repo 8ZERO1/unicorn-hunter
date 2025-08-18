@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getHotAuctions } from '../../lib/data/dataService';
 import { Auction } from '../../lib/types/auction';
 import { CountdownTimer } from '../../components/CountdownTimer';
+import { CardImage } from '../../components/CardImage';
 
 export default function HotAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -23,11 +24,11 @@ export default function HotAuctionsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      console.log('🔄 Loading real eBay auction data...');
+      console.log('🔄 Loading real eBay auction data with images...');
       const data = await getHotAuctions();
       setAuctions(data);
       setLastRefresh(new Date());
-      console.log(`✅ Loaded ${data.length} hot auctions`);
+      console.log(`✅ Loaded ${data.length} hot auctions with image support`);
     } catch (err) {
       console.error('Error loading auctions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load auctions');
@@ -170,170 +171,83 @@ export default function HotAuctionsPage() {
   return (
     <div className="hot-auctions-page">
       {/* Page Header */}
-{/* ENHANCED Page Header */}
-      <div className="page-header-enhanced">
-        {/* Main Header Section */}
-        <div className="header-main-section">
-          <div className="header-title-group">
-            <h1 className="page-title">
-              <span className="title-icon">🔥</span>
-              <span className="title-text">Hot Auctions</span>
-              <span className="title-badge">LIVE eBay Data</span>
-            </h1>
-            
-            <div className="header-status-row">
-              <div className="status-info">
-                {isLoading ? (
-                  <div className="loading-indicator">
-                    <span className="loading-spinner">⚾</span>
-                    <span className="status-text loading-text">Scouting the marketplace...</span>
-                  </div>
-                ) : error ? (
-                  <div className="error-indicator">
-                    <span className="error-icon">⚠️</span>
-                    <span className="status-text error-text">Connection lost</span>
-                  </div>
-                ) : (
-                  <div className="live-indicator">
-                    <span className="live-dot"></span>
-                    <span className="status-text">
-                      <strong>{sortedAuctions.length}</strong> unicorns detected
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              {!isLoading && !error && (
-                <div className="last-update">
-                  <span className="update-label">Last Scout</span>
-                  <span className="update-time">{lastRefresh.toLocaleTimeString()}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Action Section */}
-          <div className="header-actions-section">
-            <button 
-              onClick={loadAuctions} 
-              disabled={isLoading}
-              className={`refresh-button ${isLoading ? 'loading' : ''}`}
-            >
-              <span className="refresh-icon">{isLoading ? '⚾' : '🔄'}</span>
-              <span className="refresh-text">
-                {isLoading ? 'Hunting...' : 'Hunt Again'}
-              </span>
-            </button>
-          </div>
+      <div className="page-header">
+        <div className="header-content">
+          <h1>🔥 Hot Auctions - LIVE eBay Data</h1>
+          <p className="subtitle">
+            {isLoading ? (
+              'Loading real auction data with card images...'
+            ) : error ? (
+              `Error loading data`
+            ) : (
+              <>Live opportunities • {sortedAuctions.length} active deals • Card images enabled</>
+            )}
+          </p>
+          {!isLoading && !error && (
+            <p className="last-refresh">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </p>
+          )}
         </div>
         
-        {/* Controls Section */}
-        <div className="header-controls-section">
-          <div className="controls-grid">
-            <div className="control-item">
-              <label className="control-label">Sort by</label>
-              <select 
-                value={sortBy} 
-                onChange={(e) => {
-                  setSortBy(e.target.value as any);
-                  setSortDirection('desc');
-                }}
-                className="control-select"
-              >
-                <option value="urgency">⏰ Ending Soonest</option>
-                <option value="discount">📉 Biggest Discount</option>
-                <option value="roi">💰 Highest ROI</option>
-                <option value="priority">⭐ Highest Priority</option>
-                <option value="price">💵 Price</option>
-                <option value="card">🎯 Card Name</option>
-                <option value="grade">🏆 Grade</option>
-                <option value="type">📊 Type</option>
-                <option value="seller">👤 Seller</option>
-              </select>
-            </div>
-            
-            <div className="control-item">
-              <label className="control-label">Budget Filter</label>
-              <select 
-                value={filterBudget} 
-                onChange={(e) => setFilterBudget(Number(e.target.value))}
-                className="control-select"
-                >
-                <option value={100}>Under $100</option>
-                <option value={200}>Under $200</option>
-                <option value={300}>Under $300</option>
-                <option value={400}>Under $400</option>
-                <option value={500}>Under $500</option>
-                <option value={600}>Under $600</option>
-                <option value={700}>Under $700</option>
-                <option value={800}>Under $800</option>
-                <option value={900}>Under $900</option>
-                <option value={1000}>Under $1,000</option>
-                <option value={2000}>Under $2,000</option>
-                <option value={10000}>All Prices</option>
-              </select>
-            </div>
-            
-            <div className="control-item">
-              <label className="control-label">Quick Actions</label>
-              <div className="quick-action-buttons">
-                <button className="quick-btn priority-btn" title="High Priority Only">
-                  <span>🔥</span>
-                </button>
-                <button className="quick-btn ending-btn" title="Ending Soon">
-                  <span>⏰</span>
-                </button>
-                <button className="quick-btn discount-btn" title="Big Discounts">
-                  <span>📉</span>
-                </button>
-              </div>
-            </div>
+        {/* Refresh Button */}
+        <div className="refresh-controls">
+          <button 
+            onClick={loadAuctions} 
+            disabled={isLoading}
+            className={`refresh-btn ${isLoading ? 'loading' : ''}`}
+          >
+            {isLoading ? '⚾ Refreshing...' : '🔄 Refresh Data'}
+          </button>
+        </div>
+        
+        {/* Quick Controls */}
+        <div className="quick-controls">
+          <div className="control-group">
+            <label>Sort by:</label>
+            <select 
+              value={sortBy} 
+              onChange={(e) => {
+                setSortBy(e.target.value as any);
+                setSortDirection('desc'); // Reset to desc for dropdown changes
+              }}
+              className="sort-select"
+            >
+              <option value="urgency">Ending Soonest</option>
+              <option value="discount">Biggest Discount</option>
+              <option value="roi">Highest ROI</option>
+              <option value="priority">Highest Priority</option>
+              <option value="price">Price</option>
+              <option value="card">Card Name</option>
+              <option value="grade">Grade</option>
+              <option value="type">Type</option>
+              <option value="seller">Seller</option>
+            </select>
+          </div>
+          
+          <div className="control-group">
+            <label>Max Price:</label>
+            <select 
+              value={filterBudget} 
+              onChange={(e) => setFilterBudget(Number(e.target.value))}
+              className="budget-select"
+            >
+              <option value={1000}>Under $1,000</option>
+              <option value={500}>Under $500</option>
+              <option value={200}>Under $200</option>
+              <option value={5000}>All Prices</option>
+            </select>
           </div>
         </div>
       </div>
 
-{/* ENHANCED Loading State */}
+      {/* Loading State */}
       {isLoading && (
         <div className="loading-state">
           <div className="loading-content">
-            <div className="loading-icon baseball"></div>
-            <h3>Hunting Unicorns...</h3>
-            <p>Scanning eBay for undervalued cards across your 25-card watchlist</p>
-            <div className="loading-dots">
-              <div className="loading-dot"></div>
-              <div className="loading-dot"></div>
-              <div className="loading-dot"></div>
-            </div>
-            <div className="loading-status">
-              <span>🔍 Analyzing market data...</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ENHANCED Error State */}
-      {error && (
-        <div className="error-state">
-          <h3>Connection Timeout</h3>
-          <p>Unable to connect to eBay marketplace. The cards are waiting for you!</p>
-          <button onClick={loadAuctions} className="retry-btn">
-            Reconnect & Hunt
-          </button>
-        </div>
-      )}
-
-      {/* ENHANCED No Results State */}
-      {!isLoading && !error && sortedAuctions.length === 0 && (
-        <div className="no-results-state">
-          <div className="no-results-content">
-            <div className="no-results-icon">🎯</div>
-            <h3>No Unicorns Found Right Now</h3>
-            <p>The hunt continues! Refresh in a few minutes - rare opportunities appear when you least expect them.</p>
-            <div className="loading-dots">
-              <div className="loading-dot"></div>
-              <div className="loading-dot"></div>
-              <div className="loading-dot"></div>
-            </div>
+            <div className="loading-icon">⚾</div>
+            <h3>Loading Real eBay Data...</h3>
+            <p>Searching your 25-card watchlist for hot deals with card images</p>
           </div>
         </div>
       )}
@@ -360,12 +274,16 @@ export default function HotAuctionsPage() {
         </div>
       )}
 
-      {/* Desktop Table View */}
+      {/* Desktop Table View - ENHANCED WITH IMAGE COLUMN */}
       {!isLoading && !error && sortedAuctions.length > 0 && (
         <div className="desktop-table">
-          <table className="auctions-table">
+          <table className="auctions-table-with-images">
             <thead>
               <tr>
+                {/* NEW: Image Column */}
+                <th className="image-header">
+                  📸 Image
+                </th>
                 <th onClick={() => handleColumnSort('urgency')} className="sortable-header">
                   Urgency{getSortIndicator('urgency')}
                 </th>
@@ -399,6 +317,15 @@ export default function HotAuctionsPage() {
                 const roiDisplay = getROIDisplay(auction);
                 return (
                   <tr key={auction.id} className={`auction-row ${getUrgencyClass(auction.time_remaining_hours)}`}>
+                    {/* NEW: Image Cell with CardImage Component */}
+                    <td className="image-cell">
+                      <CardImage 
+                        auction={auction}
+                        size="medium"
+                        showModal={true}
+                      />
+                    </td>
+                    
                     <td className="urgency-cell">
                       <CountdownTimer 
                         initialHours={auction.time_remaining_hours}
@@ -496,7 +423,7 @@ export default function HotAuctionsPage() {
         </div>
       )}
 
-      {/* Mobile Card View */}
+      {/* Mobile Card View - ENHANCED WITH CARD IMAGES */}
       {!isLoading && !error && sortedAuctions.length > 0 && (
         <div className="mobile-cards">
           {sortedAuctions.map((auction) => {
@@ -504,6 +431,15 @@ export default function HotAuctionsPage() {
             const roiDisplay = getROIDisplay(auction);
             return (
               <div key={auction.id} className={`auction-card ${getUrgencyClass(auction.time_remaining_hours)}`}>
+                {/* NEW: Mobile Image Section */}
+                <div className="mobile-card-image">
+                  <CardImage 
+                    auction={auction}
+                    size="large"
+                    showModal={true}
+                  />
+                </div>
+                
                 <div className="card-header">
                   <div className="urgency-badge">
                     <CountdownTimer 

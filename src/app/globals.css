@@ -3547,3 +3547,409 @@ body::before {
     grid-template-columns: 120px 2fr 120px 140px 140px 140px 140px 140px 140px;
   }
 }
+
+/* ========================================
+   IMAGE SYSTEM CSS ENHANCEMENTS
+   Add these to your existing globals.css
+   ======================================== */
+
+/* Enhanced table layout with image column (10 columns total) */
+.auctions-table-with-images {
+  display: grid;
+  grid-template-columns: 80px 120px 2fr 120px 140px 140px 140px 140px 140px 140px;
+  /* Columns: Image | Urgency | Card | Grade | Type | Price | ROI | Discount | Seller | Actions */
+  gap: 16px;
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+}
+
+.auctions-table-with-images thead tr,
+.auctions-table-with-images tbody tr {
+  display: contents;
+}
+
+.auctions-table-with-images th,
+.auctions-table-with-images td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Image column specific styling */
+.image-header {
+  justify-content: center !important;
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: 0.9rem;
+}
+
+.image-cell {
+  justify-content: center !important;
+  padding: 8px !important;
+}
+
+/* CardImage Component Styling */
+.card-image-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-hover);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.card-image-container:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Size variants for CardImage */
+.card-image-small {
+  width: 48px;
+  height: 48px;
+}
+
+.card-image-medium {
+  width: 64px;
+  height: 64px;
+}
+
+.card-image-large {
+  width: 80px;
+  height: 80px;
+}
+
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.card-image-wrapper.clickable {
+  cursor: pointer;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  transition: transform 0.3s ease;
+}
+
+.card-image-wrapper:hover .card-image {
+  transform: scale(1.05);
+}
+
+/* Loading state for card images */
+.card-image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  border-radius: 6px;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  font-size: 1.2rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Hover overlay for magnification */
+.card-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 6px;
+  backdrop-filter: blur(2px);
+}
+
+.card-image-wrapper:hover .card-image-overlay {
+  opacity: 1;
+}
+
+.magnify-icon {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+  animation: pulse 2s infinite;
+}
+
+.overlay-text {
+  font-size: 0.7rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Error state styling */
+.card-image-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-hover);
+  border-radius: 6px;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  opacity: 0.6;
+}
+
+/* Size indicators for debugging */
+.size-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 0.6rem;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal System Styling */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(4px); }
+}
+
+.image-modal-content {
+  background: var(--card-bg);
+  border-radius: 16px;
+  width: 600px;
+  height: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from { transform: scale(0.9) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.image-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.image-modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.image-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.image-modal-close:hover {
+  background: var(--card-hover);
+  color: var(--text-primary);
+}
+
+.image-modal-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+.image-modal-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.image-modal-img:hover {
+  transform: scale(1.02);
+}
+
+.image-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--card-hover);
+  border-radius: 0 0 16px 16px;
+}
+
+.image-modal-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Mobile Card Image Enhancements */
+.mobile-card-image {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--card-hover);
+  border-radius: 12px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .auctions-table-with-images {
+    display: none; /* Hide table on mobile, show cards instead */
+  }
+  
+  .image-modal-content {
+    width: 95vw;
+    height: 70vh;
+    margin: 20px;
+  }
+  
+  .card-image-large {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .image-modal-title {
+    font-size: 1rem;
+  }
+  
+  .image-modal-body {
+    padding: 16px;
+  }
+}
+
+/* Enhanced loading animation specifically for image system */
+.loading-icon {
+  animation: bounce 2s infinite, spin 3s linear infinite;
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(var(--rotation, 0deg)); }
+  40% { transform: translateY(-10px) rotate(var(--rotation, 0deg)); }
+  60% { transform: translateY(-5px) rotate(var(--rotation, 0deg)); }
+}
+
+/* Update loading state to use baseball animation */
+.loading-state .loading-icon {
+  --rotation: 0deg;
+}
+
+.loading-state .loading-content h3::after {
+  content: " with card images";
+  color: var(--accent-primary);
+  font-weight: normal;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .card-image,
+  .image-modal-img,
+  .magnify-icon,
+  .loading-spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .card-image-container:hover {
+    transform: none !important;
+  }
+}
+
+/* Focus management for keyboard navigation */
+.card-image-wrapper:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.image-modal-close:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Print styles (hide interactive elements) */
+@media print {
+  .image-modal-overlay,
+  .card-image-overlay,
+  .size-indicator {
+    display: none !important;
+  }
+  
+  .card-image {
+    filter: grayscale(100%);
+  }
+}

@@ -15,6 +15,10 @@ export interface Auction {
   grade_number?: number;
   created_at: string;
   
+  // NEW: Image support for CardImage component
+  image_url?: string;        // Full-size image (800px) for modal display
+  thumbnail_url?: string;    // Thumbnail image (225px) for table display
+  
   // Card information
   card_info?: {
     player: string;
@@ -31,34 +35,47 @@ export interface Auction {
     percent_below_avg: number;
     is_hot_deal: boolean;
     alert_reason: string;
+    confidence_score?: number;        // 0-100 confidence in price data
+    uses_real_data?: boolean;         // true if using historical data vs mock
+    listing_type?: string;            // For type column display
     raw_roi?: {
       roi_percentage: number;
       expected_value: number;
       grading_cost: number;
       potential_profit: number;
+      confidence_score?: number;      // confidence in ROI calculation
+      uses_real_data?: boolean;       // true if using real PSA prices
     };
   };
 }
 
-// Add these fields to your existing Auction interface in auction.ts
-
-export interface Auction {
-  // ... all your existing fields ...
-  
-  price_analysis?: {
-    average_price: number;
-    percent_below_avg: number;
-    is_hot_deal: boolean;
-    alert_reason: string;
-    confidence_score?: number;        // NEW: 0-100 confidence in price data
-    uses_real_data?: boolean;         // NEW: true if using historical data vs mock
-    raw_roi?: {
-      roi_percentage: number;
-      expected_value: number;
-      grading_cost: number;
-      potential_profit: number;
-      confidence_score?: number;      // NEW: confidence in ROI calculation
-      uses_real_data?: boolean;       // NEW: true if using real PSA prices
-    };
+// Support interfaces for image system
+export interface eBayItem {
+  itemId: string;
+  title: string;
+  price: {
+    value: string;
+    currency: string;
   };
+  currentBidPrice?: {
+    value: string;
+    currency: string;
+  };
+  buyingOptions: string[];
+  itemEndDate?: string;
+  seller: {
+    username: string;
+    feedbackPercentage?: number;
+    feedbackScore?: number;
+  };
+  itemWebUrl: string;
+  condition?: string;
+  
+  // NEW: Image support from eBay Browse API
+  image?: {
+    imageUrl: string;
+  };
+  additionalImages?: Array<{
+    imageUrl: string;
+  }>;
 }
