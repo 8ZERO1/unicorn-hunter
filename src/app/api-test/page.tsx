@@ -24,8 +24,8 @@ interface eBayItem {
 interface eBaySearchResponse {
   itemSummaries?: eBayItem[];
   total?: number;
-  warnings?: any[];
-  errors?: any[];
+  warnings?: unknown[];
+  errors?: unknown[];
   multipleCards?: boolean;
   testResults?: {
     query: string;

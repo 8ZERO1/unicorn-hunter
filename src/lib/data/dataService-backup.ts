@@ -397,7 +397,7 @@ async function fetcheBayDataForCard(searchQuery: string, rawSearchQuery: string,
       }),
     });
 
-    let allItems: { item: eBayItem, searchType: 'auction' | 'bin' | 'raw' }[] = [];
+    const allItems: { item: eBayItem, searchType: 'auction' | 'bin' | 'raw' }[] = [];
 
     // Process auction results
     if (auctionResponse.ok) {

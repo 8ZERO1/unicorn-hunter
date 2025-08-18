@@ -159,7 +159,7 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems = data?.map((item: any) => ({
+    const dismissedItems = data?.map((item: unknown) => ({
       id: item.id,
       ebay_item_id: item.ebay_item_id,
       card_id: item.card_id,
@@ -666,7 +666,7 @@ async function transformeBayToAuction(
     // Get market average and calculate ROI/discount (existing logic)
     let mockAveragePrice: number;
     let percentBelowAverage: number;
-    let rawROI: any = null;
+    let rawROI: unknown = null;
     let confidence = 0;
     let usesRealData = false;
 
@@ -834,7 +834,7 @@ async function fetcheBayDataForCard(searchQuery: string, rawSearchQuery: string,
       }),
     });
 
-    let allItems: { item: eBayItem, searchType: 'auction' | 'bin' | 'raw' }[] = [];
+    const allItems: { item: eBayItem, searchType: 'auction' | 'bin' | 'raw' }[] = [];
 
     // Process auction results
     if (auctionResponse.ok) {
@@ -1072,7 +1072,7 @@ interface PriceSnapshot {
 }
 
 // Parse Finding API response to extract completed sales
-function parseCompletedSales(findingApiResponse: any, card: DatabaseCard): CompletedSale[] {
+function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): CompletedSale[] {
   try {
     const searchResult = findingApiResponse.findCompletedItemsResponse?.[0]?.searchResult?.[0];
     if (!searchResult || searchResult['@count'] === '0') {
@@ -1195,10 +1195,10 @@ function calculateIQRFilteredStats(prices: number[]): {
 // Calculate confidence score based on transaction volume and recency
 function calculateConfidenceScore(volume: number, daysSinceNewest: number): number {
   // Volume scoring (0-70 points)
-  let volumeScore = Math.min(70, volume * 7); // 7 points per transaction, max 70
+  const volumeScore = Math.min(70, volume * 7); // 7 points per transaction, max 70
   
   // Recency scoring (0-30 points)
-  let recencyScore = Math.max(0, 30 - daysSinceNewest); // Lose 1 point per day
+  const recencyScore = Math.max(0, 30 - daysSinceNewest); // Lose 1 point per day
   
   return Math.min(100, volumeScore + recencyScore);
 }
@@ -1325,7 +1325,7 @@ async function collectHistoricalDataForCard(card: DatabaseCard): Promise<PriceSn
 
 // NEW: Parse completed sales with KNOWN grader/grade (don't extract from title)
 function parseCompletedSalesWithKnownGrade(
-  findingApiResponse: any, 
+  findingApiResponse: unknown, 
   card: DatabaseCard,
   knownGrader: string,
   knownGrade: string
@@ -1510,7 +1510,7 @@ export async function collectHistoricalDataForAllCards(): Promise<boolean> {
 
     console.log(`📋 Collecting historical data for ${cards.length} cards...`);
 
-    let totalSnapshots: PriceSnapshot[] = [];
+    const totalSnapshots: PriceSnapshot[] = [];
 
     // Process each card (rate limited)
     for (let i = 0; i < cards.length; i++) {
