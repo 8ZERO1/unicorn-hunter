@@ -12,7 +12,7 @@ export default function HotAuctionsPage() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [sortBy, setSortBy] = useState<'urgency' | 'discount' | 'priority' | 'price' | 'card' | 'grade' | 'type' | 'seller' | 'roi'>('urgency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [filterBudget, setFilterBudget] = useState<number>(5000); // Changed default to "All Prices"
+  const [filterBudget, setFilterBudget] = useState<number>(1000);
 
   // Load auctions on component mount
   useEffect(() => {
@@ -169,360 +169,419 @@ export default function HotAuctionsPage() {
 
   return (
     <div className="hot-auctions-page">
-      {/* FIXED: Enhanced Page Header with proper spacing */}
-      <div className="page-header-wrapper">
-        <div className="page-header-content">
-          <div className="header-main">
-            <div className="header-title-section">
-              <h1 className="page-title">
-                🔥 Hot Auctions - LIVE eBay Data
-              </h1>
-              <div className="header-status">
+      {/* Page Header */}
+{/* ENHANCED Page Header */}
+      <div className="page-header-enhanced">
+        {/* Main Header Section */}
+        <div className="header-main-section">
+          <div className="header-title-group">
+            <h1 className="page-title">
+              <span className="title-icon">🔥</span>
+              <span className="title-text">Hot Auctions</span>
+              <span className="title-badge">LIVE eBay Data</span>
+            </h1>
+            
+            <div className="header-status-row">
+              <div className="status-info">
                 {isLoading ? (
-                  <div className="status-loading">
+                  <div className="loading-indicator">
                     <span className="loading-spinner">⚾</span>
-                    <span>Loading real auction data...</span>
+                    <span className="status-text loading-text">Scouting the marketplace...</span>
                   </div>
                 ) : error ? (
-                  <div className="status-error">
-                    <span>❌ Error loading data</span>
+                  <div className="error-indicator">
+                    <span className="error-icon">⚠️</span>
+                    <span className="status-text error-text">Connection lost</span>
                   </div>
                 ) : (
-                  <div className="status-success">
-                    <span className="opportunities-count">Live opportunities • {sortedAuctions.length} active deals</span>
-                    <span className="last-updated">Last updated: {lastRefresh.toLocaleTimeString()}</span>
+                  <div className="live-indicator">
+                    <span className="live-dot"></span>
+                    <span className="status-text">
+                      <strong>{sortedAuctions.length}</strong> unicorns detected
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-            
-            <div className="header-controls">
-              <button 
-                onClick={loadAuctions} 
-                disabled={isLoading}
-                className={`refresh-btn ${isLoading ? 'loading' : ''}`}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading-spinner">⚾</span>
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    🔄 Refresh Data
-                  </>
-                )}
-              </button>
+              
+              {!isLoading && !error && (
+                <div className="last-update">
+                  <span className="update-label">Last Scout</span>
+                  <span className="update-time">{lastRefresh.toLocaleTimeString()}</span>
+                </div>
+              )}
             </div>
           </div>
           
-          {/* FIXED: Better organized controls */}
-          <div className="header-filters">
-            <div className="filter-group">
-              <label htmlFor="sort-select">SORT BY:</label>
+          {/* Action Section */}
+          <div className="header-actions-section">
+            <button 
+              onClick={loadAuctions} 
+              disabled={isLoading}
+              className={`refresh-button ${isLoading ? 'loading' : ''}`}
+            >
+              <span className="refresh-icon">{isLoading ? '⚡' : '🔄'}</span>
+              <span className="refresh-text">
+                {isLoading ? 'Scanning...' : 'Refresh'}
+              </span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Controls Section */}
+        <div className="header-controls-section">
+          <div className="controls-grid">
+            <div className="control-item">
+              <label className="control-label">Sort by</label>
               <select 
-                id="sort-select"
                 value={sortBy} 
                 onChange={(e) => {
                   setSortBy(e.target.value as any);
-                  setSortDirection('desc'); // Reset to desc for dropdown changes
+                  setSortDirection('desc');
                 }}
                 className="control-select"
               >
-                <option value="urgency">Ending Soonest</option>
-                <option value="discount">Biggest Discount</option>
-                <option value="roi">Highest ROI</option>
-                <option value="priority">Highest Priority</option>
-                <option value="price">Price</option>
-                <option value="card">Card Name</option>
-                <option value="grade">Grade</option>
-                <option value="type">Type</option>
-                <option value="seller">Seller</option>
+                <option value="urgency">⏰ Ending Soonest</option>
+                <option value="discount">📉 Biggest Discount</option>
+                <option value="roi">💰 Highest ROI</option>
+                <option value="priority">⭐ Highest Priority</option>
+                <option value="price">💵 Price</option>
+                <option value="card">🎯 Card Name</option>
+                <option value="grade">🏆 Grade</option>
+                <option value="type">📊 Type</option>
+                <option value="seller">👤 Seller</option>
               </select>
             </div>
             
-            <div className="filter-group">
-              <label htmlFor="budget-select">MAX PRICE:</label>
+            <div className="control-item">
+              <label className="control-label">Budget Filter</label>
               <select 
-                id="budget-select"
                 value={filterBudget} 
                 onChange={(e) => setFilterBudget(Number(e.target.value))}
                 className="control-select"
-              >
-                <option value={1000}>Under $1,000</option>
-                <option value={500}>Under $500</option>
+                >
+                <option value={100}>Under $100</option>
                 <option value={200}>Under $200</option>
-                <option value={5000}>All Prices</option>
+                <option value={300}>Under $300</option>
+                <option value={400}>Under $400</option>
+                <option value={500}>Under $500</option>
+                <option value={600}>Under $600</option>
+                <option value={700}>Under $700</option>
+                <option value={800}>Under $800</option>
+                <option value={900}>Under $900</option>
+                <option value={1000}>Under $1,000</option>
+                <option value={2000}>Under $2,000</option>
+                <option value={10000}>All Prices</option>
               </select>
+            </div>
+            
+            <div className="control-item">
+              <label className="control-label">Quick Actions</label>
+              <div className="quick-action-buttons">
+                <button className="quick-btn priority-btn" title="High Priority Only">
+                  <span>🔥</span>
+                </button>
+                <button className="quick-btn ending-btn" title="Ending Soon">
+                  <span>⏰</span>
+                </button>
+                <button className="quick-btn discount-btn" title="Big Discounts">
+                  <span>📉</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Loading State */}
+{/* ENHANCED Loading State */}
       {isLoading && (
-        <div className="content-state loading-state">
-          <div className="state-content">
-            <div className="state-icon loading-spinner">⚾</div>
-            <h3>Loading Real eBay Data...</h3>
-            <p>Searching your 25-card watchlist for hot deals</p>
+        <div className="loading-state">
+          <div className="loading-content">
+            <div className="loading-icon baseball"></div>
+            <h3>Hunting Unicorns...</h3>
+            <p>Scanning eBay for undervalued cards across your 25-card watchlist</p>
+            <div className="loading-dots">
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+            </div>
+            <div className="loading-status">
+              <span>🔍 Analyzing market data...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ENHANCED Error State */}
+      {error && (
+        <div className="error-state">
+          <h3>Connection Timeout</h3>
+          <p>Unable to connect to eBay marketplace. The cards are waiting for you!</p>
+          <button onClick={loadAuctions} className="retry-btn">
+            Reconnect & Hunt
+          </button>
+        </div>
+      )}
+
+      {/* ENHANCED No Results State */}
+      {!isLoading && !error && sortedAuctions.length === 0 && (
+        <div className="no-results-state">
+          <div className="no-results-content">
+            <div className="no-results-icon">🎯</div>
+            <h3>No Unicorns Found Right Now</h3>
+            <p>The hunt continues! Refresh in a few minutes - rare opportunities appear when you least expect them.</p>
+            <div className="loading-dots">
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+              <div className="loading-dot"></div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="content-state error-state">
-          <div className="state-content">
-            <div className="state-icon">❌</div>
-            <h3>Error Loading Data</h3>
-            <p>{error}</p>
-            <button onClick={loadAuctions} className="retry-btn">
-              Try Again
-            </button>
-          </div>
+        <div className="error-state">
+          <h3>❌ Error Loading Data</h3>
+          <p>{error}</p>
+          <button onClick={loadAuctions} className="retry-btn">
+            Try Again
+          </button>
         </div>
       )}
 
       {/* No Results */}
       {!isLoading && !error && sortedAuctions.length === 0 && (
-        <div className="content-state no-results-state">
-          <div className="state-content">
-            <div className="state-icon">🎯</div>
+        <div className="no-results-state">
+          <div className="no-results-content">
+            <div className="no-results-icon">🎯</div>
             <h3>No Hot Deals Found</h3>
             <p>Keep monitoring - unicorn opportunities will appear!</p>
           </div>
         </div>
       )}
 
-      {/* FIXED: Desktop Table View - Forced to show on desktop */}
+      {/* Desktop Table View */}
       {!isLoading && !error && sortedAuctions.length > 0 && (
-        <>
-          <div className="desktop-auction-table">
-            <div className="table-container">
-              <table className="auctions-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleColumnSort('urgency')} className="sortable-header urgency-header">
-                      Urgency{getSortIndicator('urgency')}
-                    </th>
-                    <th onClick={() => handleColumnSort('card')} className="sortable-header card-header">
-                      Card{getSortIndicator('card')}
-                    </th>
-                    <th onClick={() => handleColumnSort('grade')} className="sortable-header grade-header">
-                      Grade{getSortIndicator('grade')}
-                    </th>
-                    <th onClick={() => handleColumnSort('type')} className="sortable-header type-header">
-                      Type{getSortIndicator('type')}
-                    </th>
-                    <th onClick={() => handleColumnSort('price')} className="sortable-header price-header">
-                      Price{getSortIndicator('price')}
-                    </th>
-                    <th onClick={() => handleColumnSort('roi')} className="sortable-header roi-header">
-                      ROI{getSortIndicator('roi')}
-                    </th>
-                    <th onClick={() => handleColumnSort('discount')} className="sortable-header discount-header">
-                      Discount{getSortIndicator('discount')}
-                    </th>
-                    <th onClick={() => handleColumnSort('seller')} className="sortable-header seller-header">
-                      Seller{getSortIndicator('seller')}
-                    </th>
-                    <th className="actions-header">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedAuctions.map((auction) => {
-                    const discountDisplay = getDiscountDisplay(auction);
-                    const roiDisplay = getROIDisplay(auction);
-                    return (
-                      <tr key={auction.id} className={`auction-row ${getUrgencyClass(auction.time_remaining_hours)}`}>
-                        <td className="urgency-cell">
-                          <CountdownTimer 
-                            initialHours={auction.time_remaining_hours}
-                            size="medium"
-                            showSeconds={auction.time_remaining_hours < 3}
-                          />
-                        </td>
-                        
-                        <td className="card-cell">
-                          <div className="card-info">
-                            <div className="card-name">
-                              {auction.card_info?.player || 'Unknown Player'}
-                            </div>
-                            <div className="card-details">
-                              {auction.card_info?.year} {auction.card_info?.brand} {auction.card_info?.set_name}
-                              {auction.card_info?.parallel && <span className="parallel"> • {auction.card_info.parallel}</span>}
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td className="grade-cell">
-                          <span className={`grade-badge ${(auction.grade || 'raw').toLowerCase().replace(' ', '-')}`}>
-                            {auction.grade || 'Raw'}
-                          </span>
-                        </td>
-
-                        <td className="type-cell">
-                          <span className={`type-badge ${getListingTypeClass(auction)}`}>
-                            {getListingTypeDisplay(auction)}
-                          </span>
-                        </td>
-                        
-                        <td className="price-cell">
-                          <div className="price-info">
-                            <div className="current-price">${auction.current_price.toLocaleString()}</div>
-                            {auction.buy_it_now_price && auction.buy_it_now_price !== auction.current_price && (
-                              <div className="bin-price">BIN: ${auction.buy_it_now_price.toLocaleString()}</div>
-                            )}
-                          </div>
-                        </td>
-                        
-                        {/* ROI Column */}
-                        <td className="roi-cell">
-                          {roiDisplay.hasROI ? (
-                            <div className="roi-info">
-                              <div className="roi-percent roi-positive">
-                                +{roiDisplay.percentage}%
-                              </div>
-                              <div className="roi-subtitle">ROI Potential</div>
-                              <div className="roi-detail">
-                                Profit: ${roiDisplay.profit.toLocaleString()}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="roi-empty">—</div>
-                          )}
-                        </td>
-                        
-                        {/* Discount Column */}
-                        <td className="discount-cell">
-                          <div className="discount-info">
-                            <div className={`discount-percent ${getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
-                              {discountDisplay.main}
-                            </div>
-                            <div className="discount-detail">
-                              {discountDisplay.detail}
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td className="seller-cell">
-                          <div className="seller-info">
-                            <div className="seller-name">{auction.seller_username}</div>
-                            <div className="seller-rating">
-                              {auction.seller_positive_percentage}% ({auction.seller_feedback_score})
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td className="actions-cell">
-                          <div className="action-buttons">
-                            <a 
-                              href={auction.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="btn btn-primary"
-                            >
-                              View on eBay
-                            </a>
-                            <button className="btn btn-secondary">Watch</button>
-                            <button className="btn btn-dismiss">Dismiss</button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Mobile Card View - Only shows on mobile */}
-          <div className="mobile-auction-cards">
-            {sortedAuctions.map((auction) => {
-              const discountDisplay = getDiscountDisplay(auction);
-              const roiDisplay = getROIDisplay(auction);
-              return (
-                <div key={auction.id} className={`auction-card ${getUrgencyClass(auction.time_remaining_hours)}`}>
-                  <div className="card-header">
-                    <div className="urgency-badge">
+        <div className="desktop-table">
+          <table className="auctions-table">
+            <thead>
+              <tr>
+                <th onClick={() => handleColumnSort('urgency')} className="sortable-header">
+                  Urgency{getSortIndicator('urgency')}
+                </th>
+                <th onClick={() => handleColumnSort('card')} className="sortable-header">
+                  Card{getSortIndicator('card')}
+                </th>
+                <th onClick={() => handleColumnSort('grade')} className="sortable-header">
+                  Grade{getSortIndicator('grade')}
+                </th>
+                <th onClick={() => handleColumnSort('type')} className="sortable-header">
+                  Type{getSortIndicator('type')}
+                </th>
+                <th onClick={() => handleColumnSort('price')} className="sortable-header">
+                  Price{getSortIndicator('price')}
+                </th>
+                <th onClick={() => handleColumnSort('roi')} className="sortable-header">
+                  ROI{getSortIndicator('roi')}
+                </th>
+                <th onClick={() => handleColumnSort('discount')} className="sortable-header">
+                  Discount{getSortIndicator('discount')}
+                </th>
+                <th onClick={() => handleColumnSort('seller')} className="sortable-header">
+                  Seller{getSortIndicator('seller')}
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedAuctions.map((auction) => {
+                const discountDisplay = getDiscountDisplay(auction);
+                const roiDisplay = getROIDisplay(auction);
+                return (
+                  <tr key={auction.id} className={`auction-row ${getUrgencyClass(auction.time_remaining_hours)}`}>
+                    <td className="urgency-cell">
                       <CountdownTimer 
                         initialHours={auction.time_remaining_hours}
-                        size="small"
-                        showSeconds={auction.time_remaining_hours < 1}
+                        size="medium"
+                        showSeconds={auction.time_remaining_hours < 3}
                       />
-                    </div>
-                    <div className={`discount-badge ${roiDisplay.hasROI ? 'roi-positive' : getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
-                      {roiDisplay.hasROI ? `+${roiDisplay.percentage}%` : discountDisplay.main}
-                    </div>
-                  </div>
-                  
-                  <div className="card-content">
-                    <h3 className="card-title">{auction.card_info?.player || 'Unknown Player'}</h3>
-                    <p className="card-subtitle">
-                      {auction.card_info?.year} {auction.card_info?.brand} {auction.card_info?.set_name}
-                      {auction.card_info?.parallel && ` • ${auction.card_info.parallel}`}
-                    </p>
+                    </td>
                     
-                    <div className="card-meta">
+                    <td className="card-cell">
+                      <div className="card-name">
+                        {auction.card_info?.player || 'Unknown Player'}
+                      </div>
+                      <div className="card-details">
+                        {auction.card_info?.year} {auction.card_info?.brand} {auction.card_info?.set_name}
+                        {auction.card_info?.parallel && <span className="parallel"> • {auction.card_info.parallel}</span>}
+                      </div>
+                    </td>
+                    
+                    <td className="grade-cell">
                       <span className={`grade-badge ${(auction.grade || 'raw').toLowerCase().replace(' ', '-')}`}>
                         {auction.grade || 'Raw'}
                       </span>
-                      <span className={`type-badge ${getListingTypeClass(auction)}`}>
-                        {getListingTypeDisplay(auction)}
+                    </td>
+
+                    <td className="type-cell">
+                      <span className="type-emoji">
+                        {auction.price_analysis?.listing_type === 'Auction' ? '🔨' : 
+                         auction.price_analysis?.listing_type === 'Auction+BIN' ? '⚡' : '💎'}
                       </span>
-                      <span className="price">${auction.current_price.toLocaleString()}</span>
-                      {auction.buy_it_now_price && auction.buy_it_now_price !== auction.current_price && (
-                        <span className="bin-price">BIN: ${auction.buy_it_now_price.toLocaleString()}</span>
-                      )}
-                    </div>
+                      <span className="type-badge">
+                        {auction.price_analysis?.listing_type || 'BIN'}
+                      </span>
+                    </td>
                     
-                    {/* Enhanced mobile info display */}
-                    <div className="mobile-info-grid">
-                      {roiDisplay.hasROI && (
-                        <div className="mobile-roi-info">
-                          <div className="mobile-roi roi-positive">
-                            +{roiDisplay.percentage}% ROI Potential
+                    <td className="price-cell">
+                      <div className="current-price">${auction.current_price.toLocaleString()}</div>
+                      {auction.buy_it_now_price && auction.buy_it_now_price !== auction.current_price && (
+                        <div className="bin-price">BIN: ${auction.buy_it_now_price.toLocaleString()}</div>
+                      )}
+                    </td>
+                    
+                    {/* NEW: Separate ROI Column */}
+                    <td className="roi-cell">
+                      {roiDisplay.hasROI ? (
+                        <>
+                          <div className="roi-percent roi-positive">
+                            +{roiDisplay.percentage}%
                           </div>
-                          <div className="mobile-roi-detail">
+                          <div className="roi-subtitle">ROI Potential</div>
+                          <div className="roi-detail">
                             Profit: ${roiDisplay.profit.toLocaleString()}
                           </div>
-                        </div>
+                        </>
+                      ) : (
+                        <div className="roi-empty">—</div>
                       )}
-                      <div className="mobile-discount-info">
-                        <div className={`mobile-discount ${getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
-                          {discountDisplay.main} Below Average
+                    </td>
+                    
+                    {/* UPDATED: Pure Discount Column */}
+                    <td className="discount-cell">
+                      <div className={`discount-percent ${getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
+                        {discountDisplay.main}
+                      </div>
+                      <div className="discount-detail">
+                        {discountDisplay.detail}
+                      </div>
+                    </td>
+                    
+                    <td className="seller-cell">
+                      <div className="seller-name">{auction.seller_username}</div>
+                      <div className="seller-rating">
+                        {auction.seller_positive_percentage}% ({auction.seller_feedback_score})
+                      </div>
+                    </td>
+                    
+                    <td className="actions-cell">
+                      <div className="action-buttons">
+                        <a 
+                          href={auction.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="btn btn-primary"
+                        >
+                          View on eBay
+                        </a>
+                        <button className="btn btn-secondary">Watch</button>
+                        <button className="btn btn-dismiss">Dismiss</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Mobile Card View */}
+      {!isLoading && !error && sortedAuctions.length > 0 && (
+        <div className="mobile-cards">
+          {sortedAuctions.map((auction) => {
+            const discountDisplay = getDiscountDisplay(auction);
+            const roiDisplay = getROIDisplay(auction);
+            return (
+              <div key={auction.id} className={`auction-card ${getUrgencyClass(auction.time_remaining_hours)}`}>
+                <div className="card-header">
+                  <div className="urgency-badge">
+                    <CountdownTimer 
+                      initialHours={auction.time_remaining_hours}
+                      size="small"
+                      showSeconds={auction.time_remaining_hours < 1}
+                    />
+                  </div>
+                  <div className={`discount-badge ${roiDisplay.hasROI ? 'roi-positive' : getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
+                    {roiDisplay.hasROI ? `+${roiDisplay.percentage}%` : discountDisplay.main}
+                  </div>
+                </div>
+                
+                <div className="card-content">
+                  <h3 className="card-title">{auction.card_info?.player || 'Unknown Player'}</h3>
+                  <p className="card-subtitle">
+                    {auction.card_info?.year} {auction.card_info?.brand} {auction.card_info?.set_name}
+                    {auction.card_info?.parallel && ` • ${auction.card_info.parallel}`}
+                  </p>
+                  
+                  <div className="card-meta">
+                    <span className={`grade-badge ${(auction.grade || 'raw').toLowerCase().replace(' ', '-')}`}>
+                      {auction.grade || 'Raw'}
+                    </span>
+                    <span className={`type-badge ${getListingTypeClass(auction)}`}>
+                      {getListingTypeDisplay(auction)}
+                    </span>
+                    <span className="price">${auction.current_price.toLocaleString()}</span>
+                    {auction.buy_it_now_price && auction.buy_it_now_price !== auction.current_price && (
+                      <span className="bin-price">BIN: ${auction.buy_it_now_price.toLocaleString()}</span>
+                    )}
+                  </div>
+                  
+                  {/* Enhanced mobile info display */}
+                  <div className="mobile-info-grid">
+                    {roiDisplay.hasROI && (
+                      <div className="mobile-roi-info">
+                        <div className="mobile-roi roi-positive">
+                          +{roiDisplay.percentage}% ROI Potential
                         </div>
-                        <div className="mobile-discount-detail">
-                          {discountDisplay.detail}
+                        <div className="mobile-roi-detail">
+                          Profit: ${roiDisplay.profit.toLocaleString()}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="seller-info">
-                      {auction.seller_username} • {auction.seller_positive_percentage}% ({auction.seller_feedback_score})
+                    )}
+                    <div className="mobile-discount-info">
+                      <div className={`mobile-discount ${getProfitClass(auction.price_analysis?.percent_below_avg || 0)}`}>
+                        {discountDisplay.main} Below Average
+                      </div>
+                      <div className="mobile-discount-detail">
+                        {discountDisplay.detail}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="card-actions">
-                    <a 
-                      href={auction.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="btn btn-primary btn-full"
-                    >
-                      View on eBay
-                    </a>
-                    <div className="action-row">
-                      <button className="btn btn-secondary">👁️ Watch</button>
-                      <button className="btn btn-dismiss">✖️ Dismiss</button>
-                    </div>
+                  <div className="seller-info">
+                    {auction.seller_username} • {auction.seller_positive_percentage}% ({auction.seller_feedback_score})
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </>
+                
+                <div className="card-actions">
+                  <a 
+                    href={auction.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-full"
+                  >
+                    View on eBay
+                  </a>
+                  <div className="action-row">
+                    <button className="btn btn-secondary">👁️ Watch</button>
+                    <button className="btn btn-dismiss">✖️ Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
