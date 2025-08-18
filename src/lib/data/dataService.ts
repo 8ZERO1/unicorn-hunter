@@ -131,21 +131,39 @@ export async function isItemDismissed(ebayItemId: string): Promise<boolean> {
   }
 }
 
+// Define type for what Supabase actually returns
+interface SupabaseDismissedItem {
+  id: string;
+  ebay_item_id: string;
+  card_id: string;
+  title: string;
+  current_price: number;
+  seller_username: string;
+  dismissed_at: string;
+  expires_at: string;
+  user_notes: string | null;
+  cards: {
+    player: string;
+    year: string;
+    brand: string;
+    set_name: string;
+  };
+}
+
 // Get all dismissed items (for admin interface)
 export async function getDismissedItems(includeExpired: boolean = false): Promise<DismissedItem[]> {
   try {
     console.log(`📋 FETCHING dismissed items (includeExpired: ${includeExpired})`);
     
     let query = supabase
-      .from('dismissed_items')
+      .from<SupabaseDismissedItem>('dismissed_items')
       .select(`
         *,
         cards!inner(
           player,
           year,
           brand,
-          set_name,
-          image_url
+          set_name
         )
       `)
       .order('dismissed_at', { ascending: false });
@@ -161,23 +179,26 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-const dismissedItems = data?.map((item: Record<string, any>) => ({
-  id: item.id,
-  ebay_item_id: item.ebay_item_id,
-  card_id: item.card_id,
-  title: item.title,
-  current_price: item.current_price,
-  seller_username: item.seller_username,
-  dismissed_at: item.dismissed_at,
-  expires_at: item.expires_at,
-  user_notes: item.user_notes,
-  card_info: {
-    player: item.cards.player,
-    year: item.cards.year,
-    brand: item.cards.brand,
-    set_name: item.cards.set_name
-  }
-})) || [];
+    const dismissedItems: DismissedItem[] = data?.map((item) => ({
+      id: item.id,
+      ebay_item_id: item.ebay_item_id,
+      card_id: item.card_id,
+      title: item.title,
+      current_price: item.current_price,
+      seller_username: item.seller_username,
+      dismissed_at: item.dismissed_at,
+      expires_at: item.expires_at,
+      user_notes: item.user_notes,
+      card_player: item.cards.player,
+      card_year: item.cards.year,
+      card_brand: item.cards.brand,
+      set_name: item.cards.set_name,
+      days_remaining: Math.ceil(
+        (new Date(item.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      ),
+      ebay_url: `https://www.ebay.com/itm/${item.ebay_item_id}`,
+      image_url: `https://i.ebayimg.com/images/g/${item.ebay_item_id}/s-l500.jpg` // adjust if you have a real image source
+    })) || [];
 
     console.log(`📊 Found ${dismissedItems.length} dismissed items`);
     return dismissedItems;
