@@ -154,9 +154,26 @@ interface SupabaseDismissedItem {
 export async function getDismissedItems(includeExpired: boolean = false): Promise<DismissedItem[]> {
   try {
     console.log(`📋 FETCHING dismissed items (includeExpired: ${includeExpired})`);
-    
+
+    type DismissedItemRow = {
+      id: string;
+      ebay_item_id: string;
+      title: string;
+      current_price: number;
+      dismissed_at: string;
+      expires_at: string;
+      ebay_url?: string;
+      image_url?: string;
+      cards?: {
+        player?: string;
+        year?: string;
+        brand?: string;
+        set_name?: string;
+      };
+    };
+
     let query = supabase
-      .from<SupabaseDismissedItem>('dismissed_items')
+      .from('dismissed_items')
       .select(`
         *,
         cards!inner(
@@ -179,7 +196,7 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       return [];
     }
 
-    const dismissedItems: DismissedItem[] = data?.map((item: any) => ({
+    const dismissedItems: DismissedItem[] = data?.map((item: DismissedItemRow) => ({
       id: item.id,
       ebay_item_id: item.ebay_item_id,
       title: item.title,
@@ -189,14 +206,17 @@ export async function getDismissedItems(includeExpired: boolean = false): Promis
       card_player: item.cards?.player || '',
       card_year: item.cards?.year || '',
       card_brand: item.cards?.brand || '',
-      days_remaining: Math.max(0, Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+      days_remaining: Math.max(
+        0,
+        Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      ),
       ebay_url: item.ebay_url || '',
       image_url: item.image_url || ''
     })) || [];
 
     console.log(`📊 Found ${dismissedItems.length} dismissed items`);
     return dismissedItems;
-    
+
   } catch (error) {
     console.error('💥 Error in getDismissedItems:', error);
     return [];
