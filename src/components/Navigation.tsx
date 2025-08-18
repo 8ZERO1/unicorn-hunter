@@ -18,6 +18,7 @@ export default function Navigation() {
 
   const adminItems = [
     { href: '/admin/historical-data', label: 'Historical Data', icon: '📊' },
+    { href: '/admin/dismissed-items', label: 'Dismissed Items', icon: '🗂️' },
     { href: '/admin/calculator', label: 'Card Calculator', icon: '🧮' },
     { href: '/admin/system', label: 'System Status', icon: '⚙️' },
   ];
