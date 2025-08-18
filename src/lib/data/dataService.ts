@@ -599,14 +599,43 @@ function getListingType(item: eBayItem): 'BIN' | 'Auction' | 'Auction+BIN' {
   return 'BIN';
 }
 
+// NEW: Extract image URLs from eBay response
+function extractImageUrls(item: eBayItem): { image_url?: string; thumbnail_url?: string } {
+  try {
+    // eBay Browse API image structure
+    const primaryImage = item.image?.imageUrl;
+    
+    if (primaryImage) {
+      console.log(`🖼️ IMAGE: Found eBay image - ${primaryImage.substring(0, 50)}...`);
+      
+      // eBay images often come with size parameters we can modify
+      // Convert to different sizes: s-l64 (64px), s-l225 (225px), s-l300 (300px), s-l500 (500px), s-l1600 (1600px)
+      const thumbnailUrl = primaryImage.replace(/s-l\d+/, 's-l225'); // 225px for thumbnails
+      const fullSizeUrl = primaryImage.replace(/s-l\d+/, 's-l800');   // 800px for modal
+      
+      return {
+        image_url: fullSizeUrl,
+        thumbnail_url: thumbnailUrl
+      };
+    }
+    
+    console.log(`📷 IMAGE: No image found in eBay response`);
+    return {};
+    
+  } catch (error) {
+    console.error('Error extracting image URLs:', error);
+    return {};
+  }
+}
+
 // REPLACE your transformeBayToAuction function signature and logic with this:
 
 async function transformeBayToAuction(
   item: eBayItem,
   card: DatabaseCard,
   searchQuery: string,
-  originalSearchType: 'auction' | 'bin' | 'raw', // What search found this item
-  forceGrade?: string, // For grade-specific historical searches
+  originalSearchType: 'auction' | 'bin' | 'raw',
+  forceGrade?: string,
   forceGrader?: string
 ): Promise<Auction | null> {
   try {
@@ -619,22 +648,22 @@ async function transformeBayToAuction(
 
     const listingType = getListingType(item);
     const gradeInfo = extractGradeInfo(item.title);
+    
+    // NEW: Extract image URLs
+    const imageData = extractImageUrls(item);
 
     // FIXED: Separate raw card detection from listing type
     const isRawCard = originalSearchType === 'raw' || 
                      forceGrade === 'Raw' || 
                      (!gradeInfo.grader && gradeInfo.grade === 'Raw');
 
-    // For TYPE column: Show actual eBay listing type, NOT "RAW"
-    const displayListingType = listingType; // "BIN", "Auction", "Auction+BIN"
-
-    // For GRADE column: Show grade info (including "Raw" for raw cards)
+    const displayListingType = listingType;
     const displayGrade = forceGrade || gradeInfo.grade || (isRawCard ? 'Raw' : 'Unknown');
     const displayGrader = forceGrader || gradeInfo.grader;
 
-    console.log(`🔄 TRANSFORM: ${item.title.substring(0, 40)} → TYPE: ${displayListingType}, GRADE: ${displayGrade}, RAW: ${isRawCard}`);
+    console.log(`🔄 TRANSFORM: ${item.title.substring(0, 40)} → TYPE: ${displayListingType}, GRADE: ${displayGrade}, RAW: ${isRawCard}, IMAGE: ${imageData.image_url ? 'YES' : 'NO'}`);
 
-    // Get market average and calculate ROI/discount
+    // Get market average and calculate ROI/discount (existing logic)
     let mockAveragePrice: number;
     let percentBelowAverage: number;
     let rawROI: any = null;
@@ -642,7 +671,6 @@ async function transformeBayToAuction(
     let usesRealData = false;
 
     if (isRawCard) {
-      // For raw cards, calculate ROI with real PSA data
       const roiResult = await calculateRawROI(price, card);
       rawROI = roiResult;
       percentBelowAverage = Math.max(0, roiResult.roi_percentage);
@@ -652,7 +680,6 @@ async function transformeBayToAuction(
       
       console.log(`💎 RAW CARD: ${roiResult.roi_percentage}% ROI (${usesRealData ? 'REAL' : 'estimated'} data)`);
     } else {
-      // For graded cards, try to get real market average
       const grader = displayGrader || 'Unknown';
       const grade = displayGrade || 'Unknown';
 
@@ -661,15 +688,13 @@ async function transformeBayToAuction(
       const realAverage = await getRealMarketAverage(card.id, grader, grade);
       
       if (realAverage.hasData && realAverage.confidence > 50) {
-        // Use REAL market data
         mockAveragePrice = realAverage.average;
         percentBelowAverage = Math.round(((mockAveragePrice - price) / mockAveragePrice) * 100);
         confidence = realAverage.confidence;
         usesRealData = true;
         console.log(`📊 REAL DATA: ${grader} ${grade} avg $${mockAveragePrice.toFixed(2)} (${confidence}% confidence)`);
       } else {
-        // Fallback to conservative estimate
-        mockAveragePrice = price * (1.1 + Math.random() * 0.3); // More conservative than before
+        mockAveragePrice = price * (1.1 + Math.random() * 0.3);
         percentBelowAverage = Math.round(((mockAveragePrice - price) / mockAveragePrice) * 100);
         confidence = 25;
         usesRealData = false;
@@ -728,9 +753,14 @@ async function transformeBayToAuction(
       seller_feedback_score: item.seller.feedbackScore,
       seller_positive_percentage: parseFloat(item.seller.feedbackPercentage) || 100,
       url: item.itemWebUrl,
-      grade: displayGrade,        // ✅ FIXED: Shows "Raw", "PSA 10", etc.
-      grader: displayGrader,      // ✅ FIXED: Shows "PSA", "BGS", etc. or undefined for raw
+      grade: displayGrade,
+      grader: displayGrader,
       grade_number: gradeInfo.grade_number,
+      
+      // NEW: Image data
+      image_url: imageData.image_url,
+      thumbnail_url: imageData.thumbnail_url,
+      
       created_at: new Date().toISOString(),
       card_info: {
         player: card.player,
@@ -743,12 +773,12 @@ async function transformeBayToAuction(
       price_analysis: {
         average_price: mockAveragePrice,
         percent_below_avg: Math.max(0, percentBelowAverage),
-        is_hot_deal: percentBelowAverage > (isRawCard ? 50 : 20), // Higher threshold for raw ROI
+        is_hot_deal: percentBelowAverage > (isRawCard ? 50 : 20),
         alert_reason: alertReason,
         confidence_score: confidence,
         uses_real_data: usesRealData,
-        raw_roi: rawROI, // Include enhanced ROI calculation for raw cards
-        listing_type: displayListingType  // ✅ FIXED: "BIN", "Auction", "Auction+BIN" (not "RAW")
+        raw_roi: rawROI,
+        listing_type: displayListingType
       }
     };
   } catch (error) {

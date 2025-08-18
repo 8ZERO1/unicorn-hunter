@@ -55,6 +55,7 @@ export default function DismissedItemsAdmin() {
       await restoreDismissedItem(itemId);
       // Remove from local state
       setDismissedItems(prev => prev.filter(item => item.id !== itemId));
+      alert('Item successfully restored! It will reappear in Hot Auctions.');
     } catch (error) {
       console.error('Error restoring item:', error);
       alert('Failed to restore item. Please try again.');
@@ -66,19 +67,30 @@ export default function DismissedItemsAdmin() {
   const handleCleanupExpired = async () => {
     try {
       setCleaningUp(true);
-      // Filter out expired items using calculated days remaining
-      const expiredItems = dismissedItems.filter(item => calculateDaysRemaining(item.expires_at) <= 0);
+      
+      // Calculate expired items using live calculation
+      const now = new Date();
+      const expiredItems = dismissedItems.filter(item => {
+        const expirationDate = new Date(item.expires_at);
+        return expirationDate.getTime() <= now.getTime();
+      });
+      
+      console.log(`🧹 CLEANUP: Found ${expiredItems.length} expired items out of ${dismissedItems.length} total`);
       
       if (expiredItems.length === 0) {
         alert('No expired items to clean up!');
         return;
       }
 
-      // Call cleanup function from dataService (we'll need to add this)
-      // For now, remove expired items from local state
-      setDismissedItems(prev => prev.filter(item => calculateDaysRemaining(item.expires_at) > 0));
+      // Remove expired items from state (in production, this would call API)
+      setDismissedItems(prev => prev.filter(item => {
+        const expirationDate = new Date(item.expires_at);
+        const isExpired = expirationDate.getTime() <= now.getTime();
+        return !isExpired;
+      }));
       
       alert(`Successfully cleaned up ${expiredItems.length} expired dismissal(s).`);
+      
     } catch (error) {
       console.error('Error cleaning up expired items:', error);
       alert('Failed to cleanup expired items. Please try again.');
@@ -97,7 +109,9 @@ export default function DismissedItemsAdmin() {
         case 'recent':
           return new Date(b.dismissed_at).getTime() - new Date(a.dismissed_at).getTime();
         case 'expiring':
-          return a.days_remaining - b.days_remaining;
+          const aDays = calculateDaysRemaining(a.expires_at);
+          const bDays = calculateDaysRemaining(b.expires_at);
+          return aDays - bDays;
         case 'price':
           return b.current_price - a.current_price;
         default:
@@ -106,7 +120,6 @@ export default function DismissedItemsAdmin() {
     });
 
   const getExpirationStatus = (daysRemaining: number) => {
-    // Handle undefined/null days_remaining
     if (daysRemaining === undefined || daysRemaining === null || isNaN(daysRemaining)) {
       return 'normal';
     }
@@ -125,6 +138,12 @@ export default function DismissedItemsAdmin() {
     return Math.max(0, diffDays);
   };
 
+  // Get expired count using live calculation
+  const expiredCount = dismissedItems.filter(item => {
+    const expirationDate = new Date(item.expires_at);
+    return expirationDate.getTime() <= new Date().getTime();
+  }).length;
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -139,6 +158,22 @@ export default function DismissedItemsAdmin() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Enhanced image URL extraction for eBay listings
+  const getImageUrl = (item: DismissedItem) => {
+    // If we have stored image_url, use it
+    if (item.image_url && item.image_url !== '' && !item.image_url.includes('🃏')) {
+      return item.image_url;
+    }
+    
+    // Try to construct eBay image URL from item ID
+    if (item.ebay_item_id) {
+      // This is a common eBay image pattern, but may not always work
+      return `https://i.ebayimg.com/thumbs/images/g/${item.ebay_item_id.substring(0, 12)}/s-l300.jpg`;
+    }
+    
+    return null;
   };
 
   return (
@@ -166,22 +201,20 @@ export default function DismissedItemsAdmin() {
               <div className="stat-label">Expiring Soon</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">
-                {dismissedItems.filter(item => calculateDaysRemaining(item.expires_at) <= 0).length}
-              </div>
+              <div className="stat-number">{expiredCount}</div>
               <div className="stat-label">Expired</div>
             </div>
           </div>
           <div className="header-actions">
             <button
               onClick={handleCleanupExpired}
-              disabled={cleaningUp || dismissedItems.filter(item => calculateDaysRemaining(item.expires_at) <= 0).length === 0}
+              disabled={cleaningUp || expiredCount === 0}
               className="cleanup-button"
             >
               {cleaningUp ? (
                 <>🔄 Cleaning...</>
               ) : (
-                <>🧹 Cleanup Expired</>
+                <>🧹 Cleanup Expired ({expiredCount})</>
               )}
             </button>
           </div>
@@ -250,23 +283,37 @@ export default function DismissedItemsAdmin() {
               
               {filteredItems.map((item) => {
                 const actualDaysRemaining = calculateDaysRemaining(item.expires_at);
+                const imageUrl = getImageUrl(item);
+                
                 return (
                   <div key={item.id} className="table-row">
                     <div className="col-image">
                       <div className="card-image-wrapper">
-                        {item.image_url ? (
+                        {imageUrl ? (
                           <img 
-                            src={item.image_url} 
+                            src={imageUrl} 
                             alt={item.title}
                             className="card-image"
                             onError={(e) => {
-                              // Fallback to card emoji if image fails to load
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'flex';
+                              // Fallback to placeholder if image fails
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = 'none';
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) {
+                                placeholder.style.display = 'flex';
+                              }
+                            }}
+                            onLoad={(e) => {
+                              // Hide placeholder when image loads successfully
+                              const target = e.currentTarget as HTMLImageElement;
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) {
+                                placeholder.style.display = 'none';
+                              }
                             }}
                           />
                         ) : null}
-                        <div className="card-placeholder" style={{display: item.image_url ? 'none' : 'flex'}}>
+                        <div className="card-placeholder" style={{display: imageUrl ? 'none' : 'flex'}}>
                           🃏
                         </div>
                       </div>
@@ -555,6 +602,12 @@ export default function DismissedItemsAdmin() {
           cursor: pointer;
         }
 
+        .sort-select option {
+          background: var(--card-bg);
+          color: var(--text-primary);
+          padding: 8px;
+        }
+
         .items-panel {
           background: var(--card-bg);
           border: 1px solid var(--border-subtle);
@@ -606,7 +659,7 @@ export default function DismissedItemsAdmin() {
 
         .table-header {
           display: grid;
-          grid-template-columns: 80px 2fr 120px 140px 140px 140px;
+          grid-template-columns: 80px 2fr 120px 140px 180px 120px;
           gap: 16px;
           padding: 20px 32px;
           background: rgba(255, 255, 255, 0.02);
@@ -620,7 +673,7 @@ export default function DismissedItemsAdmin() {
 
         .table-row {
           display: grid;
-          grid-template-columns: 80px 2fr 120px 140px 140px 140px;
+          grid-template-columns: 80px 2fr 120px 140px 180px 120px;
           gap: 16px;
           padding: 24px 32px;
           border-bottom: 1px solid var(--border-subtle);
@@ -656,9 +709,13 @@ export default function DismissedItemsAdmin() {
           height: 100%;
           object-fit: cover;
           border-radius: 8px;
+          transition: opacity 0.3s ease;
         }
 
         .card-placeholder {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           display: flex;
@@ -716,11 +773,12 @@ export default function DismissedItemsAdmin() {
 
         .expiration-badge {
           display: inline-block;
-          padding: 4px 8px;
+          padding: 6px 12px;
           border-radius: 6px;
           font-size: 0.85rem;
           font-weight: 600;
           text-align: center;
+          min-width: 120px;
         }
 
         .expiration-badge.normal {
@@ -758,6 +816,7 @@ export default function DismissedItemsAdmin() {
           cursor: pointer;
           transition: all 0.3s ease;
           white-space: nowrap;
+          min-width: 100px;
         }
 
         .restore-button:hover:not(:disabled) {
@@ -832,7 +891,7 @@ export default function DismissedItemsAdmin() {
           .table-header,
           .table-row {
             grid-template-columns: 1fr;
-            gap: 8px;
+            gap: 12px;
           }
 
           .col-image {

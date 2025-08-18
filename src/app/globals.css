@@ -3142,3 +3142,408 @@ body::before {
 .loading-icon.pack-opening {
   animation: packOpen 2s ease-in-out infinite;
 }
+
+/* ADD THESE STYLES TO YOUR globals.css FILE */
+
+/* =============================================
+   IMAGE SYSTEM STYLES
+   ============================================= */
+
+/* Updated Grid Layout - Image Column First */
+.auctions-table {
+  grid-template-columns: 80px 120px 2fr 120px 140px 140px 140px 140px 140px 140px;
+  /* Columns: Image | Urgency | Card | Grade | Type | Price | ROI | Discount | Seller | Actions */
+}
+
+/* Image Column Header */
+.image-header {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 12px 8px;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+/* Image Cell Container */
+.image-cell {
+  padding: 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.card-image-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid var(--border-subtle);
+}
+
+.card-image-container:hover {
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* Card Thumbnail Image */
+.card-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.card-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+/* Placeholder for Missing Images */
+.card-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.placeholder-icon {
+  width: 48px;
+  height: auto;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.card-placeholder:hover .placeholder-icon {
+  opacity: 1;
+}
+
+/* Hover Overlay with Magnify Icon */
+.image-hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 6px;
+}
+
+.card-image-container:hover .image-hover-overlay {
+  opacity: 1;
+}
+
+.magnify-icon {
+  font-size: 24px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* =============================================
+   IMAGE MODAL STYLES
+   ============================================= */
+
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.image-modal-content {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.image-modal-header {
+  padding: 20px 20px 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.image-modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-close-btn {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+.image-modal-body {
+  padding: 20px;
+  text-align: center;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 600px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.modal-image:hover {
+  transform: scale(1.02);
+}
+
+.image-modal-footer {
+  padding: 10px 20px 20px 20px;
+  text-align: center;
+}
+
+.image-modal-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* =============================================
+   MOBILE IMAGE STYLES
+   ============================================= */
+
+.mobile-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mobile-image {
+  flex-shrink: 0;
+}
+
+.mobile-image .card-image-container {
+  width: 80px;
+  height: 80px;
+}
+
+.card-header-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* =============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================= */
+
+@media (max-width: 1200px) {
+  .auctions-table {
+    grid-template-columns: 70px 110px 2fr 110px 130px 130px 130px 130px 130px;
+  }
+  
+  .card-image-container {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+  
+  .mobile-cards {
+    display: block;
+  }
+  
+  .image-modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .image-modal-header {
+    padding: 15px;
+  }
+  
+  .image-modal-body {
+    padding: 15px;
+    max-height: 60vh;
+  }
+  
+  .modal-image {
+    max-height: 400px;
+  }
+  
+  .mobile-image .card-image-container {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-image-container {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .mobile-image .card-image-container {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .image-modal-header h3 {
+    font-size: 1rem;
+    max-width: 250px;
+  }
+  
+  .modal-close-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+}
+
+/* =============================================
+   LOADING & ERROR STATES
+   ============================================= */
+
+.card-image-container.loading {
+  background: var(--card-bg);
+  position: relative;
+}
+
+.card-image-container.loading::after {
+  content: '⏳';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.card-image-container.error {
+  background: #2a2a2a;
+  border-color: #666;
+}
+
+/* =============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================= */
+
+.card-image-container:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.modal-close-btn:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .card-image-container,
+  .card-thumbnail,
+  .image-hover-overlay,
+  .modal-image {
+    transition: none;
+  }
+  
+  .image-modal-overlay,
+  .image-modal-content {
+    animation: none;
+  }
+}
+
+/* =============================================
+   PRINT STYLES (Hide images in print)
+   ============================================= */
+
+@media print {
+  .image-cell,
+  .mobile-image,
+  .image-modal-overlay {
+    display: none !important;
+  }
+  
+  .auctions-table {
+    grid-template-columns: 120px 2fr 120px 140px 140px 140px 140px 140px 140px;
+  }
+}
