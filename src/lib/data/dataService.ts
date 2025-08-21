@@ -1100,11 +1100,37 @@ interface PriceSnapshot {
   confidence_score: number;
 }
 
-// Parse Finding API response to extract completed sales
+// Add this interface BEFORE the parseCompletedSales function in your dataService.ts
+interface eBayFindingAPIItem {
+  itemId?: string[];
+  title?: string[];
+  sellingStatus?: Array<{
+    currentPrice?: Array<{
+      __value__?: string;
+    }>;
+  }>;
+  condition?: Array<{
+    conditionDisplayName?: Array<string>;
+  }>;
+  sellerInfo?: Array<{
+    sellerUserName?: Array<string>;
+  }>;
+  viewItemURL?: string[];
+  listingInfo?: Array<{
+    endTime?: Array<string>;
+  }>;
+}
+
+// REPLACE your current parseCompletedSales function with this version:
 function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): CompletedSale[] {
   try {
     const response = findingApiResponse as {
-      findCompletedItemsResponse?: Array<{ searchResult?: Array<{ '@count'?: string; item?: Array<any> }> }>;
+      findCompletedItemsResponse?: Array<{ 
+        searchResult?: Array<{ 
+          '@count'?: string; 
+          item?: Array<eBayFindingAPIItem>  // ✅ FIXED: No more `any`
+        }> 
+      }>;
     };
     const searchResult = response.findCompletedItemsResponse?.[0]?.searchResult?.[0];
     if (!searchResult || searchResult['@count'] === '0') {
@@ -1122,17 +1148,14 @@ function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): C
         if (soldPrice < 1) continue;
 
         // Extract sold date
-        const typedItem = item as {
-          listingInfo?: Array<{ endTime?: Array<string> }>;
-        };
-        const soldDate = typedItem.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
+        const soldDate = item.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
         
         // Extract title
         const title = item.title?.[0] || '';
         
         // Validate it's a legitimate card (same validation as live searches)
         const mockItem: eBayItem = {
-          itemId: (item as any).itemId?.[0] || '',
+          itemId: item.itemId?.[0] || '',  // ✅ FIXED: No more `(item as any)`
           title: title,
           price: { value: soldPrice.toString(), currency: 'USD' },
           condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
@@ -1154,14 +1177,14 @@ function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): C
         const gradeInfo = extractGradeInfo(title);
         
         sales.push({
-          itemId: (item as { itemId?: string[] }).itemId?.[0] || '',
+          itemId: item.itemId?.[0] || '',  // ✅ FIXED: No more type casting
           title: title,
           soldPrice: soldPrice,
           soldDate: soldDate,
           grader: gradeInfo.grader,
           grade: gradeInfo.grade,
           grade_number: gradeInfo.grade_number,
-          condition: (item as { condition?: Array<{ conditionDisplayName?: Array<string> }> }).condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
+          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
         });
 
         console.log(`✅ HISTORICAL: Valid sale - ${title.substring(0, 40)} - $${soldPrice} (${gradeInfo.grade})`);
