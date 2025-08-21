@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Auction } from '../types/auction';
 import { DismissedItem } from '@/lib/types/dismissed-item';
 
+
 // Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -144,8 +145,7 @@ interface SupabaseDismissedItem {
   };
 }
 
-import { supabase } from './supabaseClient';
-import { DismissedItem } from '@/lib/types/dismissed-item';
+// Transform Supabase row to DismissedItem interface
 
 interface DismissedItemRow {
   id: string;
@@ -774,7 +774,7 @@ async function transformeBayToAuction(
     return {
       id: item.itemId,
       listing_id: item.itemId,
-      card_id: card.id,
+      card_id: Number(card.id),
       title: item.title,
       current_price: price,
       buy_it_now_price: displayListingType === 'BIN' || displayListingType === 'Auction+BIN' ? price : undefined,
@@ -784,7 +784,7 @@ async function transformeBayToAuction(
       seller_positive_percentage: parseFloat(item.seller.feedbackPercentage) || 100,
       ebay_url: item.itemWebUrl,
       grade: displayGrade,
-      grader: displayGrader,
+      grader: (displayGrader === 'PSA' || displayGrader === 'BGS' || displayGrader === 'SGC') ? displayGrader : undefined,
       grade_number: gradeInfo.grade_number,
       
       // NEW: Image data
@@ -807,8 +807,7 @@ async function transformeBayToAuction(
         alert_reason: alertReason,
         confidence_score: confidence,
         uses_real_data: usesRealData,
-        raw_roi: rawROI,
-        listing_type: displayListingType
+        raw_roi: rawROI ?? undefined
       }
     };
   } catch (error) {
@@ -1082,7 +1081,7 @@ interface CompletedSale {
 }
 
 interface PriceSnapshot {
-  card_id: string;
+  card_id: string; // UUID as string
   snapshot_date: string;        // ✅ Correct
   grade: string;
   grader: string;
@@ -1104,7 +1103,10 @@ interface PriceSnapshot {
 // Parse Finding API response to extract completed sales
 function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): CompletedSale[] {
   try {
-    const searchResult = findingApiResponse.findCompletedItemsResponse?.[0]?.searchResult?.[0];
+    const response = findingApiResponse as {
+      findCompletedItemsResponse?: Array<{ searchResult?: Array<{ '@count'?: string; item?: Array<any> }> }>;
+    };
+    const searchResult = response.findCompletedItemsResponse?.[0]?.searchResult?.[0];
     if (!searchResult || searchResult['@count'] === '0') {
       console.log('📊 No completed sales found');
       return [];
@@ -1120,14 +1122,17 @@ function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): C
         if (soldPrice < 1) continue;
 
         // Extract sold date
-        const soldDate = item.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
+        const typedItem = item as {
+          listingInfo?: Array<{ endTime?: Array<string> }>;
+        };
+        const soldDate = typedItem.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
         
         // Extract title
         const title = item.title?.[0] || '';
         
         // Validate it's a legitimate card (same validation as live searches)
         const mockItem: eBayItem = {
-          itemId: item.itemId?.[0] || '',
+          itemId: (item as any).itemId?.[0] || '',
           title: title,
           price: { value: soldPrice.toString(), currency: 'USD' },
           condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
@@ -1149,14 +1154,14 @@ function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): C
         const gradeInfo = extractGradeInfo(title);
         
         sales.push({
-          itemId: item.itemId?.[0] || '',
+          itemId: (item as { itemId?: string[] }).itemId?.[0] || '',
           title: title,
           soldPrice: soldPrice,
           soldDate: soldDate,
           grader: gradeInfo.grader,
           grade: gradeInfo.grade,
           grade_number: gradeInfo.grade_number,
-          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
+          condition: (item as { condition?: Array<{ conditionDisplayName?: Array<string> }> }).condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
         });
 
         console.log(`✅ HISTORICAL: Valid sale - ${title.substring(0, 40)} - $${soldPrice} (${gradeInfo.grade})`);
@@ -1372,25 +1377,35 @@ function parseCompletedSalesWithKnownGrade(
 
     for (const item of items) {
       try {
+        const typedItem = item as {
+          sellingStatus?: Array<{ currentPrice?: Array<{ __value__?: string }> }>;
+          title?: Array<string>;
+          itemId?: Array<string>;
+          condition?: Array<{ conditionDisplayName?: Array<string> }>;
+          sellerInfo?: Array<{ sellerUserName?: Array<string> }>;
+          viewItemURL?: Array<string>;
+          listingInfo?: Array<{ endTime?: Array<string> }>;
+        };
+
         // Extract sold price
-        const soldPrice = parseFloat(item.sellingStatus?.[0]?.currentPrice?.[0]?.__value__ || '0');
+        const soldPrice = parseFloat(typedItem.sellingStatus?.[0]?.currentPrice?.[0]?.__value__ || '0');
         if (soldPrice < 1) continue;
 
         // Extract title and validate
-        const title = item.title?.[0] || '';
+        const title = typedItem.title?.[0] || '';
         
         // Create mock item for validation
         const mockItem: eBayItem = {
-          itemId: item.itemId?.[0] || '',
+          itemId: typedItem.itemId?.[0] || '',
           title: title,
           price: { value: soldPrice.toString(), currency: 'USD' },
-          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
+          condition: typedItem.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
           seller: {
-            username: item.sellerInfo?.[0]?.sellerUserName?.[0] || '',
+            username: typedItem.sellerInfo?.[0]?.sellerUserName?.[0] || '',
             feedbackPercentage: '100',
             feedbackScore: 0
           },
-          itemWebUrl: item.viewItemURL?.[0] || ''
+          itemWebUrl: typedItem.viewItemURL?.[0] || ''
         };
 
         // Apply same validation as live searches
@@ -1420,17 +1435,20 @@ function parseCompletedSalesWithKnownGrade(
         }
 
         // Extract sold date
-        const soldDate = item.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
+        const listingInfoItem = item as {
+          listingInfo?: Array<{ endTime?: Array<string> }>;
+        };
+        const soldDate = listingInfoItem.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
         
         sales.push({
-          itemId: item.itemId?.[0] || '',
+          itemId: (item as { itemId?: string[] }).itemId?.[0] || '',
           title: title,
           soldPrice: soldPrice,
           soldDate: soldDate,
           grader: knownGrader === 'Unknown' ? undefined : knownGrader as 'PSA' | 'BGS' | 'SGC',
           grade: knownGrade,
           grade_number: knownGrader === 'Unknown' ? undefined : parseFloat(knownGrade.split(' ')[1]),
-          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
+          condition: (item as { condition?: Array<{ conditionDisplayName?: Array<string> }> }).condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
         });
 
         console.log(`✅ HISTORICAL: Valid ${knownGrade} sale - ${title.substring(0, 40)} - $${soldPrice}`);
