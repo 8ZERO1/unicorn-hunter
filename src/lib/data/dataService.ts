@@ -114,14 +114,14 @@ export async function dismissAuctionItem(auctionId: string, auctionData: {
   }
 }
 
-// Check if an item is dismissed
+// Check if an item is currently dismissed (and not expired)
 export async function isItemDismissed(ebayItemId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from('dismissed_items')
-      .select('id')
+      .select('id, expires_at')
       .eq('ebay_item_id', ebayItemId)
-      .gt('expires_at', new Date().toISOString()) // Only active dismissals
+      .gt('expires_at', new Date().toISOString()) // Only non-expired dismissals
       .limit(1);
 
     if (error) {
@@ -129,12 +129,35 @@ export async function isItemDismissed(ebayItemId: string): Promise<boolean> {
       return false;
     }
 
-    return data && data.length > 0;
-
+    const isDismissed = data && data.length > 0;
+    if (isDismissed) {
+      console.log(`🚫 Item ${ebayItemId} is currently dismissed (expires: ${data[0].expires_at})`);
+    }
+    
+    return isDismissed;
   } catch (error) {
     console.error('💥 Error in isItemDismissed:', error);
     return false;
   }
+}
+
+// Define type for what Supabase actually returns
+interface SupabaseDismissedItem {
+  id: string;
+  ebay_item_id: string;
+  card_id: string;
+  title: string;
+  current_price: number;
+  seller_username: string;
+  dismissed_at: string;
+  expires_at: string;
+  user_notes: string | null;
+  cards: {
+    player: string;
+    year: string;
+    brand: string;
+    set_name: string;
+  };
 }
 
 import { supabase } from './supabaseClient';
@@ -233,30 +256,28 @@ export async function restoreDismissedItem(itemId: string): Promise<boolean> {
   }
 }
 
-// Clean up expired dismissed items
-export async function cleanupExpiredDismissedItems(): Promise<number> {
+// Cleanup expired dismissals (call periodically)
+export async function cleanupExpiredDismissals(): Promise<number> {
   try {
-    console.log('🧹 Cleaning up expired dismissed items...');
-    
-    const now = new Date().toISOString();
+    console.log('🧹 CLEANING UP expired dismissals...');
     
     const { data, error } = await supabase
       .from('dismissed_items')
       .delete()
-      .lt('expires_at', now)
-      .select();
+      .lt('expires_at', new Date().toISOString())
+      .select('id');
 
     if (error) {
-      console.error('❌ Error cleaning up expired items:', error);
+      console.error('❌ Error cleaning up expired dismissals:', error);
       return 0;
     }
 
-    const deletedCount = data?.length || 0;
-    console.log(`✅ Cleaned up ${deletedCount} expired dismissed items`);
-    return deletedCount;
-
+    const cleanedCount = data?.length || 0;
+    console.log(`✅ Cleaned up ${cleanedCount} expired dismissals`);
+    return cleanedCount;
+    
   } catch (error) {
-    console.error('💥 Error in cleanupExpiredDismissedItems:', error);
+    console.error('💥 Error in cleanupExpiredDismissals:', error);
     return 0;
   }
 }
@@ -1094,6 +1115,81 @@ interface PriceSnapshot {
   auction_volume: number;       // ✅ Correct
   bin_volume: number;           // ✅ Correct
   confidence_score: number;
+}
+
+// Parse Finding API response to extract completed sales
+function parseCompletedSales(findingApiResponse: unknown, card: DatabaseCard): CompletedSale[] {
+  try {
+    const searchResult = findingApiResponse.findCompletedItemsResponse?.[0]?.searchResult?.[0];
+    if (!searchResult || searchResult['@count'] === '0') {
+      console.log('📊 No completed sales found');
+      return [];
+    }
+
+    const items = searchResult.item || [];
+    const sales: CompletedSale[] = [];
+
+    for (const item of items) {
+      try {
+        // Extract sold price
+        const soldPrice = parseFloat(item.sellingStatus?.[0]?.currentPrice?.[0]?.__value__ || '0');
+        if (soldPrice < 1) continue;
+
+        // Extract sold date
+        const soldDate = item.listingInfo?.[0]?.endTime?.[0] || new Date().toISOString();
+        
+        // Extract title
+        const title = item.title?.[0] || '';
+        
+        // Validate it's a legitimate card (same validation as live searches)
+        const mockItem: eBayItem = {
+          itemId: item.itemId?.[0] || '',
+          title: title,
+          price: { value: soldPrice.toString(), currency: 'USD' },
+          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
+          seller: {
+            username: item.sellerInfo?.[0]?.sellerUserName?.[0] || '',
+            feedbackPercentage: '100',
+            feedbackScore: 0
+          },
+          itemWebUrl: item.viewItemURL?.[0] || ''
+        };
+
+        // Apply same validation as live searches
+        if (!isValidCard(mockItem, 'bin')) {
+          console.log(`❌ HISTORICAL: Filtered out invalid item: ${title.substring(0, 50)}`);
+          continue;
+        }
+
+        // Extract grade information
+        const gradeInfo = extractGradeInfo(title);
+        
+        sales.push({
+          itemId: item.itemId?.[0] || '',
+          title: title,
+          soldPrice: soldPrice,
+          soldDate: soldDate,
+          grader: gradeInfo.grader,
+          grade: gradeInfo.grade,
+          grade_number: gradeInfo.grade_number,
+          condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown'
+        });
+
+        console.log(`✅ HISTORICAL: Valid sale - ${title.substring(0, 40)} - $${soldPrice} (${gradeInfo.grade})`);
+        
+      } catch (itemError) {
+        console.error('Error parsing individual completed sale:', itemError);
+        continue;
+      }
+    }
+
+    console.log(`📈 HISTORICAL: Parsed ${sales.length} valid completed sales for ${card.player}`);
+    return sales;
+    
+  } catch (error) {
+    console.error('Error parsing completed sales response:', error);
+    return [];
+  }
 }
 
 // Calculate IQR-filtered statistics (removes outliers)
