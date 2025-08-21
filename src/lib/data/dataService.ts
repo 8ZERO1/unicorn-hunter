@@ -52,22 +52,6 @@ interface eBayItem {
 // NEW: DISMISS FUNCTIONALITY
 // ==========================================
 
-// Interface for dismissed items (matches the page component)
-interface DismissedItem {
-  id: string;
-  ebay_item_id: string;
-  title: string;
-  current_price: number;
-  dismissed_at: string;
-  expires_at: string;
-  card_player: string;
-  card_year: string;
-  card_brand: string;
-  days_remaining: number;
-  ebay_url: string;
-  image_url: string;
-}
-
 // Dismiss an auction item
 export async function dismissAuctionItem(auctionId: string, auctionData: {
   ebay_item_id: string;
@@ -798,7 +782,7 @@ async function transformeBayToAuction(
       seller_username: item.seller.username,
       seller_feedback_score: item.seller.feedbackScore,
       seller_positive_percentage: parseFloat(item.seller.feedbackPercentage) || 100,
-      url: item.itemWebUrl,
+      ebay_url: item.itemWebUrl,
       grade: displayGrade,
       grader: displayGrader,
       grade_number: gradeInfo.grade_number,
