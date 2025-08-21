@@ -393,7 +393,7 @@ export default function HotAuctionsPage() {
               <select 
                 value={sortBy} 
                 onChange={(e) => {
-                  setSortBy(e.target.value as unknown);
+                  setSortBy(e.target.value as typeof sortBy);
                   setSortDirection('desc');
                 }}
                 className="control-select"
