@@ -643,7 +643,7 @@ export default function HotAuctionsPage() {
                     <td className="actions-cell">
                       <div className="action-buttons">
                         <a 
-                          href={auction.url} 
+                          href={auction.ebay_url} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="btn btn-primary"
@@ -754,7 +754,7 @@ export default function HotAuctionsPage() {
                 
                 <div className="card-actions">
                   <a 
-                    href={auction.url} 
+                    href={auction.ebay_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="btn btn-primary btn-full"
