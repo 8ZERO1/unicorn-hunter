@@ -195,7 +195,7 @@ export default function DismissedItemsAdmin() {
             <label className="sort-label">Sort by:</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'recent' | 'expiring' | 'price')}
               className="sort-select"
             >
               <option value="recent">Recently Dismissed</option>
