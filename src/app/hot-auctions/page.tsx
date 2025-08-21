@@ -591,11 +591,11 @@ export default function HotAuctionsPage() {
 
                     <td className="type-cell">
                       <span className="type-emoji">
-                        {auction.price_analysis?.listing_type === 'Auction' ? '🔨' : 
-                         auction.price_analysis?.listing_type === 'Auction+BIN' ? '⚡' : '💎'}
+                        {getListingTypeDisplay(auction) === 'Auction' ? '🔨' : 
+                        getListingTypeDisplay(auction) === 'Auction+BIN' ? '⚡' : '💎'}
                       </span>
                       <span className="type-badge">
-                        {auction.price_analysis?.listing_type || 'BIN'}
+                        {getListingTypeDisplay(auction)}
                       </span>
                     </td>
                     
