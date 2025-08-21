@@ -86,7 +86,16 @@ export default function HotAuctionsPage() {
       try {
         console.log(`🗑️ DISMISSING: ${auction.title.substring(0, 50)}...`);
         
-        const success = await dismissAuctionItem(auction, 'Dismissed from Hot Auctions interface');
+        const success = await dismissAuctionItem(auction.listing_id, {
+        ebay_item_id: auction.listing_id,
+        title: auction.title,
+        current_price: auction.current_price,
+        card_player: auction.card_info?.player || '',
+        card_year: auction.card_info?.year?.toString() || '',
+        card_brand: auction.card_info?.brand || '',
+        ebay_url: auction.ebay_url || '',
+        image_url: auction.image_url || ''
+        });
         
         if (success) {
           // Start fade-out animation
