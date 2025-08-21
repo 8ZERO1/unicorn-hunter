@@ -9,7 +9,7 @@ export interface Auction {
   seller_username: string;
   seller_feedback_score: number;
   seller_positive_percentage: number;
-  url: string;
+  ebay_url: string;  // ✅ FIXED: Changed from 'url' to 'ebay_url' for consistency
   grade?: string;
   grader?: 'PSA' | 'BGS' | 'SGC';
   grade_number?: number;
