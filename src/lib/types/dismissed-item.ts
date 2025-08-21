@@ -12,3 +12,14 @@ export interface DismissedItem {
   ebay_url: string;
   image_url: string;
 }
+
+export interface DismissAuctionData {
+  ebay_item_id: string;
+  title: string;
+  current_price: number;
+  card_player: string;
+  card_year: string;
+  card_brand: string;
+  ebay_url: string;
+  image_url?: string;
+}

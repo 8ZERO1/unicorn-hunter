@@ -27,27 +27,6 @@ interface EBayBrowseApiResponse {
   itemSummaries?: EBayItemSummary[];
 }
 
-interface TransformedEBayItem {
-  itemId: string;
-  title: string;
-  sellingStatus: Array<{
-    currentPrice: Array<{
-      __value__: string;
-      '@currencyId': string;
-    }>;
-  }>;
-  listingInfo: Array<{
-    endTime: string[];
-  }>;
-  condition: Array<{
-    conditionDisplayName: string[];
-  }>;
-  sellerInfo: Array<{
-    sellerUserName: string[];
-  }>;
-  viewItemURL: string[];
-}
-
 // Cache for application token
 let cachedToken: { token: string; expiresAt: number } | null = null;
 

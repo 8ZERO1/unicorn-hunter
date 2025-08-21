@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDismissedItems, restoreDismissedItem } from '../../../lib/data/dataService';
-import Image from 'next/image';
-import { DismissedItem } from '@/lib/types/dismissed-item';
+import { DismissedItem } from '../../../lib/types/dismissed-item';
 
 export default function DismissedItemsAdmin() {
   const [dismissedItems, setDismissedItems] = useState<DismissedItem[]>([]);
@@ -15,10 +14,11 @@ export default function DismissedItemsAdmin() {
 
   useEffect(() => {
     loadDismissedItems();
-
+    
+    // Auto-refresh every 3 minutes to update expiration times
     const interval = setInterval(() => {
       loadDismissedItems();
-    }, 3 * 60 * 1000); // refresh every 3 minutes
+    }, 3 * 60 * 1000); // 3 minutes
 
     return () => clearInterval(interval);
   }, []);
@@ -39,6 +39,7 @@ export default function DismissedItemsAdmin() {
     try {
       setRestoring(itemId);
       await restoreDismissedItem(itemId);
+      // Remove from local state
       setDismissedItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
       console.error('Error restoring item:', error);
@@ -51,15 +52,18 @@ export default function DismissedItemsAdmin() {
   const handleCleanupExpired = async () => {
     try {
       setCleaningUp(true);
+      // Filter out expired items using calculated days remaining
       const expiredItems = dismissedItems.filter(item => calculateDaysRemaining(item.expires_at) <= 0);
-
+      
       if (expiredItems.length === 0) {
         alert('No expired items to clean up!');
         return;
       }
 
+      // Call cleanup function from dataService (we'll need to add this)
+      // For now, remove expired items from local state
       setDismissedItems(prev => prev.filter(item => calculateDaysRemaining(item.expires_at) > 0));
-
+      
       alert(`Successfully cleaned up ${expiredItems.length} expired dismissal(s).`);
     } catch (error) {
       console.error('Error cleaning up expired items:', error);
@@ -191,7 +195,7 @@ export default function DismissedItemsAdmin() {
             <label className="sort-label">Sort by:</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'recent' | 'expiring' | 'price')}
+              onChange={(e) => setSortBy(e.target.value as any)}
               className="sort-select"
             >
               <option value="recent">Recently Dismissed</option>
@@ -237,21 +241,22 @@ export default function DismissedItemsAdmin() {
                     <div className="col-image">
                       <div className="card-image-wrapper">
                         {item.image_url ? (
-                          <Image 
+                          <img 
                             src={item.image_url} 
                             alt={item.title}
-                            width={60}
-                            height={60}
                             className="card-image"
-                            onError={() => {
-                              // Fallback handled by Next.js Image component
+                            onError={(e) => {
+                              // Fallback to card emoji if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) placeholder.style.display = 'flex';
                             }}
                           />
-                        ) : (
-                          <div className="card-placeholder">
-                            🃏
-                          </div>
-                        )}
+                        ) : null}
+                        <div className="card-placeholder" style={{display: item.image_url ? 'none' : 'flex'}}>
+                          🃏
+                        </div>
                       </div>
                     </div>
                     
